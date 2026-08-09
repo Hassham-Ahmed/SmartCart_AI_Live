@@ -46,7 +46,8 @@ async function loadProducts() {
                     </p>
 
                     <button
-                        class="btn btn-primary w-100">
+                        class="btn btn-primary w-100"
+                        onclick="addToCart(${product.id})">
                         Add to Cart
                     </button>
 
@@ -65,3 +66,36 @@ async function loadProducts() {
 }
 
 loadProducts();
+async function addToCart(productId) {
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) {
+        alert("Please login first!");
+        window.location.href = "login.html";
+        return;
+    }
+
+    const response = await fetch("http://127.0.0.1:5000/api/products/add-to-cart", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+            user_id: user.id,
+            product_id: productId,
+            quantity: 1
+
+        })
+
+    });
+
+    const data = await response.json();
+
+    alert(data.message);
+
+}
