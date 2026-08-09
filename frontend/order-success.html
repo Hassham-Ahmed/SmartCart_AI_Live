@@ -52,29 +52,56 @@
                 </li>
             </ul>
 
-            <!-- Right Side -->
             <div>
 
-                 <button type="button"
-                    onclick="window.location.href='login.html'"
-                    class="btn btn-primary w-90 btn-lg">
-                    Login
-                </button>
+    <!-- Login & Register -->
+    <div id="auth-buttons">
 
-                <button type="button"
-                    onclick="window.location.href='register.html'"
-                    class="btn btn-primary w-90 btn-lg">
-                    Register
-                </button>
-                <a href="cart.html" class="btn btn-outline-dark position-relative ms-2">
-                    🛒 Cart
-                    <span id="cart-count"
-                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        0
-                    </span>
-                </a>
+        <button type="button"
+            onclick="window.location.href='login.html'"
+            class="btn btn-primary w-90 btn-lg">
+            Login
+        </button>
 
-            </div>
+        <button type="button"
+            onclick="window.location.href='register.html'"
+            class="btn btn-primary w-90 btn-lg">
+            Register
+        </button>
+
+    </div>
+
+    <!-- Profile & Logout -->
+    <div id="user-buttons" style="display: none;">
+
+        <button type="button"
+            onclick="window.location.href='profile.html'"
+            class="btn btn-primary w-90 btn-lg">
+            👤 Profile
+        </button>
+
+        <button type="button"
+            onclick="logoutUser()"
+            class="btn btn-danger w-90 btn-lg">
+            Logout
+        </button>
+
+    </div>
+
+    <!-- Cart -->
+    <a href="cart.html"
+        class="btn btn-outline-dark position-relative ms-2">
+
+        🛒 Cart
+
+        <span id="cart-count"
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            0
+        </span>
+
+    </a>
+
+</div>
 
         </div>
 
@@ -169,5 +196,6 @@
 
 </footer>
 <script src="js/script.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
