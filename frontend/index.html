@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+    <!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Google Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCart AI</title>
+</head>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<body>
+    <!-- Navbar Start -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            SmartCart AI
+        </a>
+
+        <!-- Mobile Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav mx-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="products.html">Products</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="catagories.html">Categories</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
+                </li>
+            </ul>
+
+            <!-- Right Side -->
+            <div>
+
+                 <button type="button"
+                    onclick="window.location.href='login.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Login
+                </button>
+
+                <button type="button"
+                    onclick="window.location.href='register.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Register
+                </button>
+                <a href="cart.html" class="btn btn-outline-dark position-relative ms-2">
+                    🛒 Cart
+                    <span id="cart-count"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        0
+                    </span>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+</nav>
+<!-- Navbar End -->
+ <!-- Hero Section Start -->
+<section class="py-5 bg-light">
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <!-- Left Side -->
+            <div class="col-lg-6">
+
+                <h1 class="display-4 fw-bold">
+                    Powered by AI Recommendations • Smart Search • Real-Time Tracking
+                </h1>
+
+                <p class="lead mt-3">
+                    Discover the perfect products with intelligent recommendations,
+                    seamless shopping, and an AI-powered assistant that makes online
+                    shopping easier and faster.
+                </p>
+
+                <button class="btn btn-primary btn-lg me-3">
+                    Shop Now
+                </button>
+
+                <button class="btn btn-outline-primary btn-lg">
+                    Explore Products
+                </button>
+               <!-- AI Search Box -->
+
+<div class="mt-5">
+
+    <div class="input-group input-group-lg shadow">
+
+        <input
+        type="text"
+        class="form-control"
+        placeholder="Describe the product you are looking for...">
+
+        <button class="btn btn-primary">
+
+            🤖 Ask AI
+
+        </button>
+
+    </div>
+
+</div>
+            </div>
+
+            <!-- Right Side -->
+            <div class="col-lg-6 text-center">
+
+                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=700"
+                     class="img-fluid rounded"
+                     alt="Shopping">
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+<!-- Hero Section End -->
+<!-- Categories Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+
+        <h2 class="text-center fw-bold mb-5">
+            Shop by Categories
+        </h2>
+
+        <div class="row text-center">
+
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card p-4 shadow-sm h-100">
+                    <h1>📱</h1>
+                    <h5>Electronics</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card p-4 shadow-sm h-100">
+                    <h1>💻</h1>
+                    <h5>Laptops</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card p-4 shadow-sm h-100">
+                    <h1>👕</h1>
+                    <h5>Fashion</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card p-4 shadow-sm h-100">
+                    <h1>🏠</h1>
+                    <h5>Home</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card p-4 shadow-sm h-100">
+                    <h1>⚽</h1>
+                    <h5>Sports</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card p-4 shadow-sm h-100">
+                    <h1>📚</h1>
+                    <h5>Books</h5>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+<!-- Featured Products -->
+<section class="py-5">
+    <div class="container">
+
+        <h2 class="text-center fw-bold mb-5">
+            Featured Products
+        </h2>
+
+        <div class="row">
+
+            <!-- Product 1 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="card shadow-sm">
+
+                    <img src="https://picsum.photos/300/250?random=1" class="card-img-top">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            Wireless Headphones
+                        </h5>
+
+                        <p class="text-primary fw-bold">
+                            $120
+                        </p>
+
+                        <button class="btn btn-primary w-100">
+                            Add to Cart
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Product 2 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="card shadow-sm">
+
+                    <img src="https://picsum.photos/300/250?random=2" class="card-img-top">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            Smart Watch
+                        </h5>
+
+                        <p class="text-primary fw-bold">
+                            $250
+                        </p>
+
+                        <button class="btn btn-primary w-100">
+                            Add to Cart
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Product 3 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="card shadow-sm">
+
+                    <img src="https://picsum.photos/300/250?random=3" class="card-img-top">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            Gaming Mouse
+                        </h5>
+
+                        <p class="text-primary fw-bold">
+                            $80
+                        </p>
+
+                        <button class="btn btn-primary w-100">
+                            Add to Cart
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Product 4 -->
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="card shadow-sm">
+
+                    <img src="https://picsum.photos/300/250?random=4" class="card-img-top">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            Laptop Backpack
+                        </h5>
+
+                        <p class="text-primary fw-bold">
+                            $60
+                        </p>
+
+                        <button class="btn btn-primary w-100">
+                            Add to Cart
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</section>
+<div class="row text-center">
+
+        <div class="col-md-3">
+            <h1>🤖</h1>
+            <h5>AI Recommendations</h5>
+            <p>Get personalized product suggestions powered by AI.</p>
+        </div>
+
+        <div class="col-md-3">
+            <h1>🚚</h1>
+            <h5>Fast Delivery</h5>
+            <p>Quick and reliable delivery at your doorstep.</p>
+        </div>
+
+        <div class="col-md-3">
+            <h1>💳</h1>
+            <h5>Secure Payments</h5>
+            <p>Multiple secure payment options for safe shopping.</p>
+        </div>
+
+        <div class="col-md-3">
+            <h1>📞</h1>
+            <h5>24/7 Support</h5>
+            <p>Our support team is always ready to help you.</p>
+        </div>
+
+    </div>
+<section class="container my-5">
+
+    <h2 class="text-center mb-4">
+        Why Choose SmartCart AI?
+    </h2>
+    <section class="container my-5">
+
+    <div class="bg-primary text-white rounded-4 p-5 text-center">
+
+        <h2>🔥 Today's Best Deals</h2>
+        <section class="container my-5">
+
+    <h2 class="text-center mb-5">
+        What Our Customers Say
+    </h2>
+
+    <div class="row">
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h5>⭐⭐⭐⭐⭐</h5>
+
+                    <p>
+                        Amazing AI recommendations. Shopping has become much easier.
+                    </p>
+
+                    <h6>- Ali Khan</h6>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h5>⭐⭐⭐⭐⭐</h5>
+
+                    <p>
+                        Fast delivery and excellent customer support.
+                    </p>
+
+                    <h6>- Sara Ahmed</h6>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <h5>⭐⭐⭐⭐⭐</h5>
+
+                    <p>
+                        The AI chatbot helped me find exactly what I needed.
+                    </p>
+
+                    <h6>- Ahmed Raza</h6>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+<section class="container my-5">
+
+    <div class="bg-light shadow rounded-4 p-5 text-center">
+
+        <h2 style="color: #006eff;">Subscribe to Our Newsletter</h2>
+
+        <p style="color: #006eff;">
+            Get updates about new products, AI features and exclusive discounts.
+        </p>
+
+        <div class="row justify-content-center">
+
+            <div class="col-md-6">
+
+                <input type="email"
+                       class="form-control mb-3"
+                       placeholder="Enter your email">
+
+                <button class="btn btn-primary w-100">
+                    Subscribe
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+        <p class="mt-3">
+            Save up to <strong>50% OFF</strong> on selected products.
+            Limited time offers available for Electronics, Laptops, Mobiles and Fashion.
+        </p>
+
+        <a href="products.html" class="btn btn-light btn-lg mt-3">
+            Shop Now
+        </a>
+
+    </div>
+
+</section>
+    
+
+</section>
+<script src="js/script.js"></script>
+</body>
+</html>

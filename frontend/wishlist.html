@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Document</title>
+</head>
+<body>
+     <!-- Navbar Start -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            SmartCart AI
+        </a>
+
+        <!-- Mobile Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav mx-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="index.html">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="products.html">Products</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="catagories.html">Categories</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
+                </li>
+            </ul>
+
+            <!-- Right Side -->
+            <div>
+
+                 <button type="button"
+                    onclick="window.location.href='login.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Login
+                </button>
+
+                <button type="button"
+                    onclick="window.location.href='register.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Register
+                </button>
+                <a href="cart.html" class="btn btn-outline-dark position-relative ms-2">
+                    🛒 Cart
+                    <span id="cart-count"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        0
+                    </span>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+</nav>
+<!-- Navbar End -->
+ <div class="container my-5">
+
+    <h2 class="mb-4">❤️ My Wishlist</h2>
+
+    <div class="row">
+
+        <!-- Product 1 -->
+        <div class="col-md-3 mb-4">
+
+            <div class="card shadow-sm">
+
+                <img src="images/laptop.jpg" class="card-img-top" height="220">
+
+                <div class="card-body">
+
+                    <h5>Gaming Laptop</h5>
+
+                    <p class="text-primary fw-bold">Rs.185,000</p>
+
+                    <a href="product-details.html" class="btn btn-primary w-100 mb-2">
+                        View Product
+                    </a>
+
+                    <button class="btn btn-danger w-100">
+                        Remove
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Product 2 -->
+        <div class="col-md-3 mb-4">
+
+            <div class="card shadow-sm">
+
+                <img src="images/watch.jpg" class="card-img-top" height="220">
+
+                <div class="card-body">
+
+                    <h5>Smart Watch</h5>
+
+                    <p class="text-primary fw-bold">Rs.22,500</p>
+
+                    <a href="product-details.html" class="btn btn-primary w-100 mb-2">
+                        View Product
+                    </a>
+
+                    <button class="btn btn-danger w-100">
+                        Remove
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<footer class="bg-dark text-white mt-5 py-4">
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-4">
+                <h4>SmartCart AI</h4>
+                <p>AI-powered e-commerce platform for smart shopping.</p>
+            </div>
+
+            <div class="col-md-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="index.html" class="text-white text-decoration-none">Home</a></li>
+                    <li><a href="products.html" class="text-white text-decoration-none">Products</a></li>
+                    <li><a href="login.html" class="text-white text-decoration-none">Login</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                <h5>Contact</h5>
+                <p>Email: support@smartcartai.com</p>
+                <p>Phone: +92-300-1234567</p>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <p class="text-center mb-0">
+            © 2026 SmartCart AI. All Rights Reserved.
+        </p>
+
+    </div>
+
+</footer>
+<script src="js/script.js"></script>
+</body>
+</html>

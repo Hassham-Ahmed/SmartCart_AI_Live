@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Document</title>
+</head>
+<body>
+     <!-- Navbar Start -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            SmartCart AI
+        </a>
+
+        <!-- Mobile Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav mx-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="index.html">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="products.html">Products</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="catagories.html">Categories</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
+                </li>
+            </ul>
+
+            <!-- Right Side -->
+            <div>
+
+                 <button type="button"
+                    onclick="window.location.href='login.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Login
+                </button>
+
+                <button type="button"
+                    onclick="window.location.href='register.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Register
+                </button>
+                <a href="cart.html" class="btn btn-outline-dark position-relative ms-2">
+                    🛒 Cart
+                    <span id="cart-count"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        0
+                    </span>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+</nav>
+<!-- Navbar End -->
+ <div class="container my-5">
+
+    <!-- Heading -->
+
+    <div class="text-center mb-5">
+
+        <h1>About SmartCart AI</h1>
+
+        <p class="text-muted">
+            An AI-powered E-Commerce Platform for Smart Shopping
+        </p>
+
+    </div>
+
+    <!-- About -->
+
+    <div class="row align-items-center">
+
+        <div class="col-md-6">
+
+            <img src="https://picsum.photos/600/400"
+                class="img-fluid rounded shadow">
+
+        </div>
+
+        <div class="col-md-6">
+
+            <h3>Who We Are</h3>
+
+            <p>
+
+                SmartCart AI is a modern e-commerce platform that helps users
+                discover products through Artificial Intelligence. Our system
+                provides intelligent recommendations, secure shopping,
+                personalized experiences, and an AI shopping assistant.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <hr class="my-5">
+
+    <!-- Mission Vision -->
+
+    <div class="row text-center">
+
+        <div class="col-md-6">
+
+            <div class="card shadow p-4">
+
+                <h3>🎯 Our Mission</h3>
+
+                <p>
+
+                    To simplify online shopping using Artificial Intelligence
+                    and personalized recommendations.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="card shadow p-4">
+
+                <h3>🚀 Our Vision</h3>
+
+                <p>
+
+                    To become one of the smartest AI-powered shopping platforms
+                    with secure and intelligent customer experiences.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <hr class="my-5">
+
+    <!-- Technologies -->
+
+    <div class="text-center">
+
+        <h2>Technologies Used</h2>
+
+        <br>
+
+        <span class="badge bg-primary fs-6 p-3 m-2">HTML5</span>
+
+        <span class="badge bg-success fs-6 p-3 m-2">CSS3</span>
+
+        <span class="badge bg-warning text-dark fs-6 p-3 m-2">Bootstrap</span>
+
+        <span class="badge bg-dark fs-6 p-3 m-2">JavaScript</span>
+
+        <span class="badge bg-danger fs-6 p-3 m-2">Flask</span>
+
+        <span class="badge bg-info text-dark fs-6 p-3 m-2">MySQL</span>
+
+        <span class="badge bg-secondary fs-6 p-3 m-2">AI Chatbot</span>
+
+        <span class="badge bg-primary fs-6 p-3 m-2">Python</span>
+
+        <span class="badge bg-success fs-6 p-3 m-2">OpenAI API</span>
+
+        <span class="badge bg-info text-dark fs-6 p-3 m-2">Gemini API</span>
+
+        <span class="badge bg-warning text-dark fs-6 p-3 m-2">MCP</span>
+
+    </div>
+
+</div>
+<footer class="bg-dark text-white mt-5 py-4">
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-4">
+                <h4>SmartCart AI</h4>
+                <p>AI-powered e-commerce platform for smart shopping.</p>
+            </div>
+
+            <div class="col-md-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="index.html" class="text-white text-decoration-none">Home</a></li>
+                    <li><a href="products.html" class="text-white text-decoration-none">Products</a></li>
+                    <li><a href="login.html" class="text-white text-decoration-none">Login</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                <h5>Contact</h5>
+                <p>Email: support@smartcartai.com</p>
+                <p>Phone: +92-300-1234567</p>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <p class="text-center mb-0">
+            © 2026 SmartCart AI. All Rights Reserved.
+        </p>
+
+    </div>
+
+</footer>
+<script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Document</title>
+</head>
+<body>
+     <!-- Navbar Start -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            SmartCart AI
+        </a>
+
+        <!-- Mobile Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav mx-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="index.html">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="products.html">Products</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="catagories.html">Categories</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
+                </li>
+            </ul>
+
+            <!-- Right Side -->
+            <div>
+
+                 <button type="button"
+                    onclick="window.location.href='login.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Login
+                </button>
+
+                <button type="button"
+                    onclick="window.location.href='register.html'"
+                    class="btn btn-primary w-90 btn-lg">
+                    Register
+                </button>
+                <a href="cart.html" class="btn btn-outline-dark position-relative ms-2">
+                    🛒 Cart
+                    <span id="cart-count"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        0
+                    </span>
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+</nav>
+<!-- Navbar End -->
+ <div class="container my-5">
+
+    <div class="row">
+
+        <!-- Left Side -->
+        <div class="col-md-4">
+
+            <div class="card shadow text-center p-4">
+
+                <img src="https://via.placeholder.com/150"
+                     class="rounded-circle mx-auto mb-3"
+                     width="150"
+                     height="150">
+
+                <h3>Hasham Ahmed</h3>
+
+                <p class="text-muted">
+                    hasham@gmail.com
+                </p>
+
+                <button class="btn btn-primary w-100">
+                    Edit Profile
+                </button>
+                    <a href="wishlist.html" class="btn btn-outline-primary w-100 mt-2">
+                    ❤️ Wishlist
+                    </a>
+
+                    <a href="order-history.html" class="btn btn-outline-success w-100 mt-2">
+                    📦 My Orders
+                    </a>
+            </div>
+
+        </div>
+
+        <!-- Right Side -->
+
+        <div class="col-md-8">
+
+            <div class="card shadow p-4">
+
+                <h3>Personal Information</h3>
+
+                <hr>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label>Full Name</label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="Hasham Ahmed">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label>Email</label>
+
+                        <input type="email"
+                               class="form-control"
+                               value="hasham@gmail.com">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label>Phone</label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="+92 3001234567">
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label>City</label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="Karachi">
+
+                    </div>
+
+                    <div class="col-12 mb-3">
+
+                        <label>Address</label>
+
+                        <textarea class="form-control"
+                                  rows="3">North Nazimabad, Karachi</textarea>
+
+                    </div>
+
+                </div>
+
+                <button class="btn btn-success">
+
+                    Save Changes
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+ <footer class="bg-dark text-white mt-5 py-4">
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-md-4">
+                <h4>SmartCart AI</h4>
+                <p>AI-powered e-commerce platform for smart shopping.</p>
+            </div>
+
+            <div class="col-md-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="index.html" class="text-white text-decoration-none">Home</a></li>
+                    <li><a href="products.html" class="text-white text-decoration-none">Products</a></li>
+                    <li><a href="login.html" class="text-white text-decoration-none">Login</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                <h5>Contact</h5>
+                <p>Email: support@smartcartai.com</p>
+                <p>Phone: +92-300-1234567</p>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <p class="text-center mb-0">
+            © 2026 SmartCart AI. All Rights Reserved.
+        </p>
+
+    </div>
+
+</footer>
+<script src="js/script.js"></script>
+</body>
+</html>
