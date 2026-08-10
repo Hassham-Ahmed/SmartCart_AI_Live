@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from config import db
+from config import get_db
 
 auth = Blueprint("auth", __name__)
 
@@ -10,29 +10,28 @@ def register():
 
     data = request.get_json()
 
-    full_name = data["full_name"]
-    email = data["email"]
-    password = data["password"]
-    phone = data["phone"]
-    city = data["city"]
-
+    db = get_db()
     cursor = db.cursor()
 
     sql = """
-    INSERT INTO users (full_name, email, password, phone, city)
+    INSERT INTO users
+    (full_name, email, password, phone, city)
     VALUES (%s,%s,%s,%s,%s)
     """
 
     values = (
-        full_name,
-        email,
-        password,
-        phone,
-        city
+        data["full_name"],
+        data["email"],
+        data["password"],
+        data["phone"],
+        data["city"]
     )
 
     cursor.execute(sql, values)
     db.commit()
+
+    cursor.close()
+    db.close()
 
     return {
         "message": "User Registered Successfully!"
@@ -49,24 +48,24 @@ def login():
     email = data["email"]
     password = data["password"]
 
+    db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, email, password FROM users")
-    print(cursor.fetchall())
+
     sql = """
-    SELECT * FROM users
+    SELECT *
+    FROM users
     WHERE email=%s AND password=%s
     """
-
-    print("Email:", email)
-    print("Password:", password)
 
     cursor.execute(sql, (email, password))
 
     user = cursor.fetchone()
 
-    print("User:", user)
+    cursor.close()
+    db.close()
 
     if user:
+
         return {
             "message": "Login Successful!",
             "user": {

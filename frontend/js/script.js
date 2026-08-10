@@ -66,6 +66,7 @@ async function loadProducts() {
 }
 
 loadProducts();
+updateCartCount();
 async function addToCart(productId) {
 
     const user = JSON.parse(localStorage.getItem("user"));
@@ -97,5 +98,26 @@ async function addToCart(productId) {
     const data = await response.json();
 
     alert(data.message);
+    updateCartCount();
+
+}
+async function updateCartCount() {
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) {
+
+        document.getElementById("cart-count").innerText = 0;
+        return;
+
+    }
+
+    const response = await fetch(
+        `http://127.0.0.1:5000/api/products/cart-count/${user.id}`
+    );
+
+    const data = await response.json();
+
+    document.getElementById("cart-count").innerText = data.count;
 
 }

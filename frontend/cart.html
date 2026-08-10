@@ -129,46 +129,7 @@
 
             </thead>
 
-            <tbody>
-
-                <tr>
-
-                    <td>Gaming Laptop</td>
-
-                    <td>
-                        <img src="https://picsum.photos/80?random=1"
-                             class="img-fluid rounded">
-                    </td>
-
-                    <td>Rs.185,000</td>
-
-                    <td>
-
-                        <div class="input-group" style="width:140px;">
-
-                            <button class="btn btn-outline-secondary">-</button>
-
-                            <input type="text"
-                                   class="form-control text-center"
-                                   value="1">
-
-                            <button class="btn btn-outline-secondary">+</button>
-
-                        </div>
-
-                    </td>
-
-                    <td>Rs.185,000</td>
-
-                    <td>
-
-                        <button class="btn btn-danger">
-                            Remove
-                        </button>
-
-                    </td>
-
-                </tr>
+            <tbody id="cartItems">
 
             </tbody>
 
@@ -178,7 +139,10 @@
 
     <div class="text-end">
 
-        <h3>Total : Rs.185,000</h3>
+        <h3>
+            Total : Rs.
+            <span id="cartTotal">0</span>
+        </h3>
 
         <a href="checkout.html" class="btn btn-success btn-lg">
             Proceed to Checkout

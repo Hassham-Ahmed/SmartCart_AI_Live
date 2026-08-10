@@ -1,10 +1,11 @@
 import mysql.connector
 
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="root",
-    database="smartcart_ai"
-)
 
-print("✅ MySQL Connected Successfully!")
+def get_db():
+
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="root",
+        database="smartcart_ai"
+    )

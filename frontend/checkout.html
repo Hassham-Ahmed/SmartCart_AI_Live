@@ -167,7 +167,11 @@
 
                     <div class="col-12 mb-3">
                         <label>Shipping Address</label>
-                        <textarea class="form-control" rows="3"></textarea>
+                        <textarea
+                            id="address"
+                            class="form-control"
+                            rows="3">
+                        </textarea>
                     </div>
 
                 </div>
@@ -268,12 +272,13 @@
 
                     </div>
 
-                    <a href="order-success.html"
-                        class="btn btn-success w-100 btn-lg">
+                    <button
+                        class="btn btn-success w-100 btn-lg"
+                        onclick="placeOrder()">
 
                         Place Order
 
-                    </a>
+                    </button>
                     <div class="text-center mt-3">
 
                         <small class="text-muted">
@@ -331,6 +336,7 @@
 
 </footer>
 <script src="js/script.js"></script>
+<script src="js/checkout.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
