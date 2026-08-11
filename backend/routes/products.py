@@ -498,3 +498,201 @@ def update_product(id):
         "message":"Product Updated Successfully!"
 
     }
+
+    # ---------------- GET ALL ORDERS (ADMIN) ----------------
+
+@products.route("/admin/orders", methods=["GET"])
+def admin_orders():
+
+    db = get_db()
+
+    cursor = db.cursor(dictionary=True)
+
+    sql = """
+
+    SELECT
+
+        orders.id,
+        users.full_name,
+        orders.total_amount,
+        orders.payment_method,
+        orders.shipping_address,
+        orders.status,
+        orders.created_at
+
+    FROM orders
+
+    JOIN users
+
+    ON orders.user_id = users.id
+
+    ORDER BY orders.created_at DESC
+
+    """
+
+    cursor.execute(sql)
+
+    orders = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return orders
+
+    # ---------------- UPDATE ORDER STATUS ----------------
+
+@products.route("/update-order-status/<int:id>", methods=["PUT"])
+def update_order_status(id):
+
+    db = get_db()
+
+    cursor = db.cursor()
+
+    data = request.get_json()
+
+    cursor.execute(
+
+        "UPDATE orders SET status=%s WHERE id=%s",
+
+        (
+
+            data["status"],
+            id
+
+        )
+
+    )
+
+    db.commit()
+
+    cursor.close()
+    db.close()
+
+    return {
+
+        "message": "Order Status Updated Successfully!"
+
+    }
+
+    # ---------------- ADD TO WISHLIST ----------------
+
+@products.route("/add-to-wishlist", methods=["POST"])
+def add_to_wishlist():
+
+    data = request.get_json()
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    # Check duplicate
+    cursor.execute(
+        """
+        SELECT *
+        FROM wishlist
+        WHERE user_id=%s AND product_id=%s
+        """,
+        (
+            data["user_id"],
+            data["product_id"]
+        )
+    )
+
+    already = cursor.fetchone()
+
+    if already:
+
+        cursor.close()
+        db.close()
+
+        return {
+            "message": "Product already in wishlist!"
+        }
+
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO wishlist
+        (user_id, product_id)
+        VALUES (%s,%s)
+        """,
+        (
+            data["user_id"],
+            data["product_id"]
+        )
+    )
+
+    db.commit()
+
+    cursor.close()
+    db.close()
+
+    return {
+        "message": "Product added to wishlist!"
+    }
+
+    # ---------------- GET WISHLIST ----------------
+
+@products.route("/wishlist/<int:user_id>", methods=["GET"])
+def get_wishlist(user_id):
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+
+        SELECT
+
+            wishlist.id,
+
+            products.id AS product_id,
+
+            products.name,
+
+            products.price,
+
+            products.image,
+
+            products.category
+
+        FROM wishlist
+
+        JOIN products
+
+        ON wishlist.product_id = products.id
+
+        WHERE wishlist.user_id=%s
+
+    """, (user_id,))
+
+    wishlist = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return wishlist
+
+    # ---------------- REMOVE FROM WISHLIST ----------------
+
+@products.route("/remove-wishlist/<int:id>", methods=["DELETE"])
+def remove_wishlist(id):
+
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+
+        "DELETE FROM wishlist WHERE id=%s",
+
+        (id,)
+
+    )
+
+    db.commit()
+
+    cursor.close()
+    db.close()
+
+    return {
+        "message": "Removed from wishlist!"
+    }

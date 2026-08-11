@@ -45,11 +45,25 @@ async function loadProducts() {
                         PKR ${product.price}
                     </p>
 
-                    <button
-                        class="btn btn-primary w-100"
-                        onclick="addToCart(${product.id})">
-                        Add to Cart
-                    </button>
+                    <div class="d-flex gap-2">
+
+                        <button
+                            class="btn btn-primary flex-fill"
+                            onclick="addToCart(${product.id})">
+
+                            Add to Cart
+
+                        </button>
+
+                        <button
+                            class="btn btn-outline-danger"
+                            onclick="addToWishlist(${product.id})">
+
+                            ❤️
+
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -119,5 +133,53 @@ async function updateCartCount() {
     const data = await response.json();
 
     document.getElementById("cart-count").innerText = data.count;
+
+}
+
+// ================= WISHLIST =================
+
+async function addToWishlist(productId){
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if(!user){
+
+        alert("Please login first.");
+
+        window.location.href="login.html";
+
+        return;
+
+    }
+
+    const response = await fetch(
+
+        "http://127.0.0.1:5000/api/products/add-to-wishlist",
+
+        {
+
+            method:"POST",
+
+            headers:{
+
+                "Content-Type":"application/json"
+
+            },
+
+            body:JSON.stringify({
+
+                user_id:user.id,
+
+                product_id:productId
+
+            })
+
+        }
+
+    );
+
+    const result = await response.json();
+
+    alert(result.message);
 
 }
