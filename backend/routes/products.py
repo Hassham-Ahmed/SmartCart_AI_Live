@@ -8,10 +8,35 @@ products = Blueprint("products", __name__)
 @products.route("/", methods=["GET"])
 def get_products():
 
+    category = request.args.get("category")
+    search = request.args.get("search")
+
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM products")
+    sql = "SELECT * FROM products WHERE 1=1"
+    values = []
+
+    # Category Filter
+    if category:
+        sql += " AND category=%s"
+        values.append(category)
+
+    # Search Filter
+    if search:
+        sql += """
+        AND (
+            name LIKE %s
+            OR brand LIKE %s
+            OR category LIKE %s
+        )
+        """
+
+        keyword = f"%{search}%"
+
+        values.extend([keyword, keyword, keyword])
+
+    cursor.execute(sql, tuple(values))
 
     products_data = cursor.fetchall()
 
@@ -25,33 +50,45 @@ def get_products():
 
 @products.route("/add-to-cart", methods=["POST"])
 def add_to_cart():
-
     data = request.get_json()
 
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
 
-    sql = """
-    INSERT INTO shopping_cart
-    (user_id, product_id, quantity)
-    VALUES (%s,%s,%s)
-    """
+    user_id = data.get("user_id")
+    product_id = data.get("product_id")
+    quantity = data.get("quantity", 1)
 
+    # 1. Check if product already exists in cart
     cursor.execute(
-
-        sql,
-
-        (
-            data["user_id"],
-            data["product_id"],
-            data.get("quantity", 1)
-        )
-
+        "SELECT id, quantity FROM shopping_cart WHERE user_id=%s AND product_id=%s",
+        (user_id, product_id)
     )
+    existing_item = cursor.fetchone()
+
+    write_cursor = db.cursor()
+
+    if existing_item:
+        # 2. Update quantity if item already in cart
+        new_qty = existing_item["quantity"] + quantity
+        write_cursor.execute(
+            "UPDATE shopping_cart SET quantity=%s WHERE id=%s",
+            (new_qty, existing_item["id"])
+        )
+    else:
+        # 3. Insert new row if item not in cart
+        write_cursor.execute(
+            """
+            INSERT INTO shopping_cart (user_id, product_id, quantity)
+            VALUES (%s, %s, %s)
+            """,
+            (user_id, product_id, quantity)
+        )
 
     db.commit()
 
     cursor.close()
+    write_cursor.close()
     db.close()
 
     return {
@@ -101,18 +138,15 @@ def get_cart(user_id):
 
 @products.route("/cart-count/<int:user_id>", methods=["GET"])
 def cart_count(user_id):
-
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-
         """
         SELECT SUM(quantity) AS total
         FROM shopping_cart
         WHERE user_id=%s
         """,
-
         (user_id,)
     )
 
@@ -121,8 +155,11 @@ def cart_count(user_id):
     cursor.close()
     db.close()
 
+    # Safe Integer Conversion
+    total_count = int(result["total"]) if result and result["total"] is not None else 0
+
     return {
-        "count": result["total"] if result["total"] else 0
+        "count": total_count
     }
 
     # ---------------- INCREASE QUANTITY ----------------
@@ -696,3 +733,191 @@ def remove_wishlist(id):
     return {
         "message": "Removed from wishlist!"
     }
+
+    # ---------------- ADD REVIEW ----------------
+
+@products.route("/add-review", methods=["POST"])
+def add_review():
+
+    data = request.get_json()
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    # Check if user already reviewed this product
+    cursor.execute(
+        """
+        SELECT *
+        FROM reviews
+        WHERE user_id=%s AND product_id=%s
+        """,
+        (
+            data["user_id"],
+            data["product_id"]
+        )
+    )
+
+    already = cursor.fetchone()
+
+    if already:
+
+        cursor.close()
+        db.close()
+
+        return {
+            "message": "You have already reviewed this product."
+        }
+
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO reviews
+        (user_id, product_id, rating, review)
+        VALUES (%s,%s,%s,%s)
+        """,
+        (
+            data["user_id"],
+            data["product_id"],
+            data["rating"],
+            data["review"]
+        )
+    )
+
+    db.commit()
+
+    cursor.close()
+    db.close()
+
+    return {
+        "message": "Review submitted successfully!"
+    }
+
+    # ---------------- GET REVIEWS ----------------
+
+@products.route("/reviews/<int:product_id>", methods=["GET"])
+def get_reviews(product_id):
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+
+            reviews.id,
+            reviews.rating,
+            reviews.review,
+            reviews.created_at,
+
+            users.full_name
+
+        FROM reviews
+
+        JOIN users
+
+        ON reviews.user_id = users.id
+
+        WHERE reviews.product_id=%s
+
+        ORDER BY reviews.created_at DESC
+        """,
+        (product_id,)
+    )
+
+    reviews = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return reviews
+
+    # ---------------- PRODUCT RATING ----------------
+
+@products.route("/rating/<int:product_id>", methods=["GET"])
+def product_rating(product_id):
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        """
+        SELECT
+
+            ROUND(AVG(rating),1) AS average_rating,
+            COUNT(*) AS total_reviews
+
+        FROM reviews
+
+        WHERE product_id=%s
+        """,
+        (product_id,)
+    )
+
+    result = cursor.fetchone()
+
+    cursor.close()
+    db.close()
+
+    return {
+        "average_rating": result["average_rating"] if result["average_rating"] else 0,
+        "total_reviews": result["total_reviews"]
+    }
+
+    # ---------------- GET CATEGORIES ----------------
+
+@products.route("/categories", methods=["GET"])
+def get_categories():
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+
+        SELECT
+
+            category,
+            COUNT(*) AS total
+
+        FROM products
+
+        GROUP BY category
+
+        ORDER BY category ASC
+
+    """)
+
+    categories = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return categories
+
+    # ---------------- GET TOP 5-STAR REVIEWS ----------------
+@products.route("/reviews/top", methods=["GET"])
+def get_top_reviews():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    # Database table columns: 'review', 'rating', 'user_id'
+    sql = """
+        SELECT 
+            r.rating,
+            r.review,
+            r.created_at,
+            u.full_name
+        FROM reviews r
+        JOIN users u ON r.user_id = u.id
+        WHERE r.rating = 5
+        ORDER BY r.id DESC
+        LIMIT 6
+    """
+    
+    cursor.execute(sql)
+    reviews = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    return reviews

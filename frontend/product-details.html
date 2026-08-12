@@ -1,268 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Product Details | SmartCart AI</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<link rel="stylesheet" href="assets/css/style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | SmartCart AI</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
+<body class="bg-light">
 
-<body>
-<!-- Navbar Start -->
-<nav class="navbar navbar-expand-lg bg-white shadow-sm">
-    <div class="container">
+    <!-- Dynamic Navbar -->
+    <div id="navbar-container"></div>
 
-        <!-- Logo -->
-        <a class="navbar-brand fw-bold text-primary" href="#">
-            SmartCart AI
-        </a>
+    <!-- Main Product View Section -->
+    <div class="container my-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <div class="row g-4 align-items-center">
 
-        <!-- Mobile Button -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <!-- Menu -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-
-            <ul class="navbar-nav mx-auto">
-
-                <li class="nav-item">
-                    <a class="nav-link active" href="index.html">Home</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="products.html">Products</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="catagories.html">Categories</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="about.html">About</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="contact.html">Contact</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
-                </li>
-            </ul>
-
-            <div>
-
-    <!-- Login & Register -->
-    <div id="auth-buttons">
-
-        <button type="button"
-            onclick="window.location.href='login.html'"
-            class="btn btn-primary w-90 btn-lg">
-            Login
-        </button>
-
-        <button type="button"
-            onclick="window.location.href='register.html'"
-            class="btn btn-primary w-90 btn-lg">
-            Register
-        </button>
-
-    </div>
-
-    <!-- Profile & Logout -->
-    <div id="user-buttons" style="display: none;">
-
-        <button type="button"
-            onclick="window.location.href='profile.html'"
-            class="btn btn-primary w-90 btn-lg">
-            👤 Profile
-        </button>
-
-        <button type="button"
-            onclick="logoutUser()"
-            class="btn btn-danger w-90 btn-lg">
-            Logout
-        </button>
-
-    </div>
-
-    <!-- Cart -->
-    <a href="cart.html"
-        class="btn btn-outline-dark position-relative ms-2">
-
-        🛒 Cart
-
-        <span id="cart-count"
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            0
-        </span>
-
-    </a>
-    <a href="wishlist.html"
-
-                        class="btn btn-outline-danger ms-2">
-
-                        ❤️ Wishlist
-
-                    </a>
-
-</div>
-
-        </div>
-
-    </div>
-</nav>
-<!-- Navbar End -->
- <div class="container my-5">
-
-    <div class="row">
-
-        <!-- Product Image -->
-        <div class="col-lg-5">
-            <img src="https://picsum.photos/500/500?random=1"
-                 class="img-fluid rounded shadow">
-        </div>
-
-        <!-- Product Details -->
-        <div class="col-lg-7">
-
-            <h2>Gaming Laptop</h2>
-
-            <p class="text-warning fs-5">
-                ★★★★★ (4.8)
-            </p>
-
-            <h3 class="text-primary">
-                Rs. 185,000
-            </h3>
-
-            <p><strong>Brand:</strong> HP</p>
-
-            <p><strong>Availability:</strong>
-                <span class="text-success">
-                    In Stock
-                </span>
-            </p>
-
-            <hr>
-
-            <h5>Description</h5>
-
-            <p>
-                High-performance gaming laptop powered by Intel Core i7,
-                16GB RAM, RTX Graphics Card and 1TB SSD.
-            </p>
-
-            <div class="mt-4">
-                  <div class="my-3">
-
-                        <label><strong>Quantity</strong></label>
-
-                        <div class="input-group" style="width:170px;">
-
-                        <button class="btn btn-outline-secondary">-</button>
-
-                        <input type="text"
-                        class="form-control text-center"
-                        value="1">
-
-                        <button class="btn btn-outline-secondary">+</button>
-
-                        </div>
-
+                <!-- Product Image Column -->
+                <div class="col-lg-5 text-center">
+                    <div class="position-relative overflow-hidden rounded-4 shadow-sm border">
+                        <img id="product-image" 
+                             src="https://picsum.photos/450/450?random=1" 
+                             class="img-fluid w-100" 
+                             style="max-height: 420px; object-fit: cover;" 
+                             alt="Product Image">
                     </div>
-                <button onclick="window.location.href='cart.html'" class="btn btn-primary w-90">
-                        Add to Cart
-                    </button>
+                </div>
 
-                <button class="btn btn-success btn-lg">
-                    Buy Now
-                </button>
-                <button class="btn btn-outline-danger">
+                <!-- Product Details Column -->
+                <div class="col-lg-7">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span id="product-stock" class="badge bg-success px-3 py-2 rounded-pill">In Stock</span>
+                        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                            ⭐ <span id="average-rating">0</span> Rating
+                        </span>
+                    </div>
 
-                    ❤ Add to Wishlist
+                    <h2 id="product-name" class="fw-bold text-dark mb-2">Loading Product...</h2>
+                    
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-tag-fill me-1 text-primary"></i> 
+                        Category: <strong id="product-category" class="text-dark">--</strong>
+                    </p>
 
-                </button>
-                <span class="badge bg-success">
+                    <h3 id="product-price" class="fw-bold text-primary display-6 mb-4">PKR 0</h3>
 
-                    In Stock
+                    <hr class="text-muted opacity-25">
 
+                    <h6 class="fw-bold text-secondary">Description</h6>
+                    <p id="product-description" class="text-secondary lh-base mb-4">
+                        Loading description...
+                    </p>
+
+                    <!-- Quantity Controls -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-secondary small">Select Quantity</label>
+                        <div class="input-group" style="max-width: 160px;">
+                            <button class="btn btn-outline-secondary fw-bold" type="button" onclick="decreaseQty()">-</button>
+                            <input type="number" id="quantity" class="form-control text-center fw-bold bg-light" value="1" min="1">
+                            <button class="btn btn-outline-secondary fw-bold" type="button" onclick="increaseQty()">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-2 pt-2">
+                        <button onclick="addToCartDetails()" class="btn btn-primary btn-lg fw-bold px-4 shadow-sm">
+                            <i class="bi bi-cart-plus me-1"></i> Add to Cart
+                        </button>
+
+                        <button onclick="buyNowDetails()" class="btn btn-success btn-lg fw-bold px-4 shadow-sm">
+                            <i class="bi bi-lightning-charge me-1"></i> Buy Now
+                        </button>
+
+                        <button onclick="addToWishlistDetails()" class="btn btn-outline-danger btn-lg fw-bold px-3">
+                            ❤️ Wishlist
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Prompt Section -->
+    <div class="container my-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-dark text-white">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="fs-4">🤖</span>
+                <h4 class="fw-bold mb-0">Ask SmartCart AI About This Product</h4>
+            </div>
+            <p class="text-secondary small mb-3">Get instant answers about specifications, compatibility, and real user opinions.</p>
+            <div class="input-group input-group-lg">
+                <input type="text" class="form-control border-0" placeholder="e.g. Is this compatible with Mac? How is the battery life?">
+                <button class="btn btn-primary fw-bold px-4" type="button">Ask AI</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="container my-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+                <h3 class="fw-bold text-dark mb-0"><i class="bi bi-star-fill text-warning me-2"></i>Product Reviews</h3>
+                <span class="fs-5 fw-bold text-muted">
+                    <span id="reviews-avg-rating" class="text-dark">0</span> ⭐ 
+                    (<span id="total-reviews">0</span> Reviews)
                 </span>
             </div>
 
+            <!-- Write Review Card -->
+            <div class="card border-0 bg-light p-4 rounded-4 mb-4">
+                <h5 class="fw-bold text-dark mb-3">✍️ Write a Review</h5>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium text-secondary">Your Rating</label>
+                    <select id="rating" class="form-select border-0 shadow-sm">
+                        <option value="5">⭐⭐⭐⭐⭐ (5 - Excellent)</option>
+                        <option value="4">⭐⭐⭐⭐ (4 - Very Good)</option>
+                        <option value="3">⭐⭐⭐ (3 - Average)</option>
+                        <option value="2">⭐⭐ (2 - Poor)</option>
+                        <option value="1">⭐ (1 - Terrible)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium text-secondary">Review Comments</label>
+                    <textarea id="review" class="form-control border-0 shadow-sm" rows="3" placeholder="Share your experience with this product..."></textarea>
+                </div>
+
+                <div class="text-end">
+                    <button class="btn btn-primary fw-bold px-4" onclick="submitReview()">
+                        Submit Review
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reviews Dynamic List -->
+            <div id="reviewsContainer"></div>
         </div>
-
     </div>
 
-</div>
-<div class="container my-5">
+    <!-- Dynamic Footer -->
+    <div id="footer-container"></div>
 
-    <h3 class="mb-4">
-        🤖 Ask AI About This Product
-    </h3>
-
-    <div class="input-group">
-
-        <input type="text"
-               class="form-control"
-               placeholder="Ask anything about this product...">
-
-        <button class="btn btn-primary">
-            Ask AI
-        </button>
-
-    </div>
-
-</div>
-<footer class="bg-dark text-white mt-5 py-4">
-
-    <div class="container">
-
-        <div class="row">
-
-            <div class="col-md-4">
-                <h4>SmartCart AI</h4>
-                <p>AI-powered e-commerce platform for smart shopping.</p>
-            </div>
-
-            <div class="col-md-4">
-                <h5>Quick Links</h5>
-                <ul class="list-unstyled">
-                    <li><a href="index.html" class="text-white text-decoration-none">Home</a></li>
-                    <li><a href="products.html" class="text-white text-decoration-none">Products</a></li>
-                    <li><a href="login.html" class="text-white text-decoration-none">Login</a></li>
-                </ul>
-            </div>
-
-            <div class="col-md-4">
-                <h5>Contact</h5>
-                <p>Email: support@smartcartai.com</p>
-                <p>Phone: +92-300-1234567</p>
-            </div>
-
-        </div>
-
-        <hr>
-
-        <p class="text-center mb-0">
-            © 2026 SmartCart AI. All Rights Reserved.
-        </p>
-
-    </div>
-
-</footer>
-<script src="js/script.js"></script>
-<script src="main.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="main.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/product-details.js"></script>
 </body>
-
 </html>

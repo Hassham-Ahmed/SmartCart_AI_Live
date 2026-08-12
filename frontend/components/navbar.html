@@ -1,0 +1,107 @@
+<!-- Navbar Start -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            SmartCart AI
+        </a>
+
+        <!-- Mobile Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <ul class="navbar-nav mx-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="index.html">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="products.html">Products</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="categories.html">Categories</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
+                </li>
+            </ul>
+
+<div class="d-flex align-items-center gap-2">
+
+    <!-- Login & Register -->
+    <div id="auth-buttons" class="align-items-center gap-2">
+
+        <button type="button"
+            onclick="window.location.href='login.html'"
+            class="btn btn-primary">
+            Login
+        </button>
+
+        <button type="button"
+            onclick="window.location.href='register.html'"
+            class="btn btn-primary">
+            Register
+        </button>
+
+    </div>
+
+    <!-- Profile & Logout -->
+    <div id="user-buttons"
+         class="align-items-center gap-2"
+         style="display:none;">
+
+        <button type="button"
+            onclick="window.location.href='profile.html'"
+            class="btn btn-primary">
+            👤 Profile
+        </button>
+
+        <button type="button"
+            onclick="logoutUser()"
+            class="btn btn-danger">
+            Logout
+        </button>
+
+        <a href="cart.html"
+           class="btn btn-outline-dark position-relative">
+
+            🛒 Cart
+
+            <span id="cart-count"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                0
+            </span>
+
+        </a>
+
+        <a href="wishlist.html"
+           class="btn btn-outline-danger">
+
+            ❤️ Wishlist
+
+        </a>
+
+    </div>
+
+</div>
+        </div>
+
+    </div>
+</nav>
+<!-- Navbar End -->

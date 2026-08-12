@@ -2,405 +2,391 @@
 <html lang="en">
 
 <head>
-        <!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-<!-- Google Font -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCart AI</title>
+    <title>SmartCart AI - Next-Gen Shopping</title>
+
+    <!-- Bootstrap 5.3.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome CDN for Star Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fbff;
+            color: #212529;
+        }
+
+        /* Hero Section Gradient */
+        .hero-section {
+            background: linear-gradient(135deg, #0a192f 0%, #0d6efd 100%);
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* AI Search Box Styling */
+        .ai-search-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50px;
+            padding: 6px;
+        }
+
+        .ai-search-input {
+            border: none;
+            background: transparent;
+            color: #ffffff;
+            padding-left: 20px;
+        }
+
+        .ai-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        .ai-search-input:focus {
+            box-shadow: none;
+            background: transparent;
+            color: #fff;
+        }
+
+        /* Category Card Hover */
+        .category-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        .category-card:hover {
+            transform: translateY(-8px);
+            border-color: #0d6efd;
+            box-shadow: 0 12px 24px rgba(13, 110, 253, 0.15) !important;
+        }
+
+        /* Feature Card Hover */
+        .feature-box {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 30px 20px;
+            border: 1px solid #eef2f7;
+            transition: all 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+        }
+
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            background: #e8f0fe;
+            color: #0d6efd;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 18px;
+        }
+
+        /* Best Deals Gradient Banner */
+        .deals-banner {
+            background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+            border-radius: 24px;
+            color: white;
+            box-shadow: 0 15px 35px rgba(13, 110, 253, 0.25);
+        }
+
+        .testimonial-card {
+            border-radius: 16px;
+            border: none;
+            background: #ffffff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-4px);
+        }
+    </style>
 </head>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
 <body>
-    <!-- Navbar Start -->
-<nav class="navbar navbar-expand-lg bg-white shadow-sm">
-    <div class="container">
 
-        <!-- Logo -->
-        <a class="navbar-brand fw-bold text-primary" href="#">
-            SmartCart AI
+    <!-- Navbar Container -->
+    <div id="navbar-container"></div>
+
+    <!-- Hero Section Start -->
+    <section class="hero-section py-5 py-lg-6">
+        <div class="container py-4">
+            <div class="row align-items-center g-5">
+
+                <!-- Left Content -->
+                <div class="col-lg-6 text-center text-lg-start">
+                    <span class="badge bg-light text-primary px-3 py-2 rounded-pill fw-semibold mb-3">
+                        ✨ AI-Powered Shopping Experience
+                    </span>
+
+                    <h1 class="display-4 fw-extrabold text-white lh-sm">
+                        Smart Recommendations • Real-Time Search • Fast Checkout
+                    </h1>
+
+                    <p class="lead text-light opacity-90 my-4 fs-5">
+                        Discover products tailored to your preferences with our intelligent AI shopping assistant.
+                    </p>
+
+                    <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3 mb-4">
+                        <a href="#products-section" class="btn btn-light text-primary btn-lg rounded-pill fw-bold px-4 shadow">
+                            Shop Now <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                        <a href="products.html" class="btn btn-outline-light btn-lg rounded-pill fw-medium px-4">
+                            Explore Catalog
+                        </a>
+                    </div>
+
+                    <!-- AI Search Box -->
+                    <div class="mt-4">
+                        <div class="ai-search-box d-flex align-items-center shadow">
+                            <input type="text" class="form-control ai-search-input fs-6"
+                                placeholder="Describe what you are looking for (e.g. 'Best wireless earbuds for gaming')...">
+                            <button class="btn btn-primary rounded-pill px-4 py-2 fw-semibold d-flex align-items-center gap-2">
+                                <span>🤖</span> <span>Ask AI</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Visual -->
+                <div class="col-lg-6 text-center">
+                    <div class="position-relative d-inline-block">
+                        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80"
+                            class="img-fluid rounded-4 shadow-lg border border-2 border-white border-opacity-25"
+                            alt="Smart Shopping">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <!-- Hero Section End -->
+
+    <!-- Categories Section -->
+    <div class="row g-3 justify-content-center">
+
+    <!-- Electronics -->
+    <div class="col-6 col-md-2">
+        <a href="categories.html?category=Electronics" class="text-decoration-none text-dark">
+            <div class="card h-100 border-0 shadow-sm p-3 text-center rounded-4 category-card">
+                <div class="fs-1 mb-2">📱</div>
+                <h6 class="fw-bold mb-0">Electronics</h6>
+            </div>
         </a>
-
-        <!-- Mobile Button -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <!-- Menu -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-
-            <ul class="navbar-nav mx-auto">
-
-                <li class="nav-item">
-                    <a class="nav-link active" href="#">Home</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="products.html">Products</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="catagories.html">Categories</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="about.html">About</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="contact.html">Contact</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="ai-chat.html">AI Assistant</a>
-                </li>
-            </ul>
-
-            <div>
-
-    <!-- Login & Register -->
-    <div id="auth-buttons">
-
-        <button type="button"
-            onclick="window.location.href='login.html'"
-            class="btn btn-primary w-90 btn-lg">
-            Login
-        </button>
-
-        <button type="button"
-            onclick="window.location.href='register.html'"
-            class="btn btn-primary w-90 btn-lg">
-            Register
-        </button>
-
     </div>
 
-    <!-- Profile & Logout -->
-    <div id="user-buttons" style="display: none;">
-
-        <button type="button"
-            onclick="window.location.href='profile.html'"
-            class="btn btn-primary w-90 btn-lg">
-            👤 Profile
-        </button>
-
-        <button type="button"
-            onclick="logoutUser()"
-            class="btn btn-danger w-90 btn-lg">
-            Logout
-        </button>
-
+    <!-- Laptops -->
+    <div class="col-6 col-md-2">
+        <a href="categories.html?category=Laptops" class="text-decoration-none text-dark">
+            <div class="card h-100 border-0 shadow-sm p-3 text-center rounded-4 category-card">
+                <div class="fs-1 mb-2">💻</div>
+                <h6 class="fw-bold mb-0">Laptops</h6>
+            </div>
+        </a>
     </div>
 
-    <!-- Cart -->
-    <a href="cart.html"
-        class="btn btn-outline-dark position-relative ms-2">
-
-        🛒 Cart
-
-        <span id="cart-count"
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            0
-        </span>
-
-    </a>
-
-    <a href="wishlist.html"
-
-                        class="btn btn-outline-danger ms-2">
-
-                        ❤️ Wishlist
-
-                    </a>
-
-</div>
-
-        </div>
-
+    <!-- Fashion -->
+    <div class="col-6 col-md-2">
+        <a href="categories.html?category=Fashion" class="text-decoration-none text-dark">
+            <div class="card h-100 border-0 shadow-sm p-3 text-center rounded-4 category-card">
+                <div class="fs-1 mb-2">👕</div>
+                <h6 class="fw-bold mb-0">Fashion</h6>
+            </div>
+        </a>
     </div>
-</nav>
-<!-- Navbar End -->
- <!-- Hero Section Start -->
-<section class="py-5 bg-light">
-    <div class="container">
 
-        <div class="row align-items-center">
+    <!-- Home -->
+    <div class="col-6 col-md-2">
+        <a href="categories.html?category=Home" class="text-decoration-none text-dark">
+            <div class="card h-100 border-0 shadow-sm p-3 text-center rounded-4 category-card">
+                <div class="fs-1 mb-2">🏠</div>
+                <h6 class="fw-bold mb-0">Home</h6>
+            </div>
+        </a>
+    </div>
 
-            <!-- Left Side -->
-            <div class="col-lg-6">
+    <!-- Sports -->
+    <div class="col-6 col-md-2">
+        <a href="categories.html?category=Sports" class="text-decoration-none text-dark">
+            <div class="card h-100 border-0 shadow-sm p-3 text-center rounded-4 category-card">
+                <div class="fs-1 mb-2">⚽</div>
+                <h6 class="fw-bold mb-0">Sports</h6>
+            </div>
+        </a>
+    </div>
 
-                <h1 class="display-4 fw-bold">
-                    Powered by AI Recommendations • Smart Search • Real-Time Tracking
-                </h1>
-
-                <p class="lead mt-3">
-                    Discover the perfect products with intelligent recommendations,
-                    seamless shopping, and an AI-powered assistant that makes online
-                    shopping easier and faster.
-                </p>
-
-                <button class="btn btn-primary btn-lg me-3">
-                    Shop Now
-                </button>
-
-                <button class="btn btn-outline-primary btn-lg">
-                    Explore Products
-                </button>
-               <!-- AI Search Box -->
-
-<div class="mt-5">
-
-    <div class="input-group input-group-lg shadow">
-
-        <input
-        type="text"
-        class="form-control"
-        placeholder="Describe the product you are looking for...">
-
-        <button class="btn btn-primary">
-
-            🤖 Ask AI
-
-        </button>
-
+    <!-- Books -->
+    <div class="col-6 col-md-2">
+        <a href="categories.html?category=Books" class="text-decoration-none text-dark">
+            <div class="card h-100 border-0 shadow-sm p-3 text-center rounded-4 category-card">
+                <div class="fs-1 mb-2">📚</div>
+                <h6 class="fw-bold mb-0">Books</h6>
+            </div>
+        </a>
     </div>
 
 </div>
+
+    <!-- Dynamic Products Section -->
+    <section id="products-section" class="py-5 bg-white">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h6 class="text-primary fw-bold text-uppercase">Featured Items</h6>
+                    <h2 class="fw-bold mb-0">Trending Products</h2>
+                </div>
+                <a href="products.html" class="btn btn-outline-primary rounded-pill px-4">View All</a>
             </div>
 
-            <!-- Right Side -->
-            <div class="col-lg-6 text-center">
+            <div class="row g-4" id="productsContainer">
+                <!-- JavaScript products map yahan render honge -->
+            </div>
+        </div>
+    </section>
 
-                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=700"
-                     class="img-fluid rounded"
-                     alt="Shopping">
+    <!-- Why Choose SmartCart AI -->
+    <section class="py-5">
+        <div class="container py-3">
+
+            <div class="text-center mb-5">
+                <h6 class="text-primary fw-bold text-uppercase">Our Value</h6>
+                <h2 class="fw-bold fs-1">Why Choose SmartCart AI?</h2>
+            </div>
+
+            <div class="row g-4 text-center">
+
+                <div class="col-md-3">
+                    <div class="feature-box h-100">
+                        <div class="icon-circle">🤖</div>
+                        <h5 class="fw-bold">AI Recommendations</h5>
+                        <p class="text-muted fs-6 mb-0">Get personalized product suggestions powered by AI algorithms.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="feature-box h-100">
+                        <div class="icon-circle">🚚</div>
+                        <h5 class="fw-bold">Fast Delivery</h5>
+                        <p class="text-muted fs-6 mb-0">Quick, reliable, and trackable delivery right at your doorstep.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="feature-box h-100">
+                        <div class="icon-circle">💳</div>
+                        <h5 class="fw-bold">Secure Payments</h5>
+                        <p class="text-muted fs-6 mb-0">Multiple trusted and encrypted payment gateways for safe shopping.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="feature-box h-100">
+                        <div class="icon-circle">📞</div>
+                        <h5 class="fw-bold">24/7 Support</h5>
+                        <p class="text-muted fs-6 mb-0">Dedicated support team and instant AI assistance available always.</p>
+                    </div>
+                </div>
 
             </div>
 
         </div>
+    </section>
 
-    </div>
-</section>
-<!-- Hero Section End -->
-<!-- Categories Section -->
-<section class="py-5 bg-light">
-    <div class="container">
-
-        <h2 class="text-center fw-bold mb-5">
-            Shop by Categories
-        </h2>
-
-        <div class="row text-center">
-
-            <div class="col-lg-2 col-md-4 col-6 mb-4">
-                <div class="card p-4 shadow-sm h-100">
-                    <h1>📱</h1>
-                    <h5>Electronics</h5>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-md-4 col-6 mb-4">
-                <div class="card p-4 shadow-sm h-100">
-                    <h1>💻</h1>
-                    <h5>Laptops</h5>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-md-4 col-6 mb-4">
-                <div class="card p-4 shadow-sm h-100">
-                    <h1>👕</h1>
-                    <h5>Fashion</h5>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-md-4 col-6 mb-4">
-                <div class="card p-4 shadow-sm h-100">
-                    <h1>🏠</h1>
-                    <h5>Home</h5>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-md-4 col-6 mb-4">
-                <div class="card p-4 shadow-sm h-100">
-                    <h1>⚽</h1>
-                    <h5>Sports</h5>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-md-4 col-6 mb-4">
-                <div class="card p-4 shadow-sm h-100">
-                    <h1>📚</h1>
-                    <h5>Books</h5>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</section>
-<div class="row" id="productsContainer">
-
-</div>
-<div class="row text-center">
-
-        <div class="col-md-3">
-            <h1>🤖</h1>
-            <h5>AI Recommendations</h5>
-            <p>Get personalized product suggestions powered by AI.</p>
-        </div>
-
-        <div class="col-md-3">
-            <h1>🚚</h1>
-            <h5>Fast Delivery</h5>
-            <p>Quick and reliable delivery at your doorstep.</p>
-        </div>
-
-        <div class="col-md-3">
-            <h1>💳</h1>
-            <h5>Secure Payments</h5>
-            <p>Multiple secure payment options for safe shopping.</p>
-        </div>
-
-        <div class="col-md-3">
-            <h1>📞</h1>
-            <h5>24/7 Support</h5>
-            <p>Our support team is always ready to help you.</p>
-        </div>
-
-    </div>
-<section class="container my-5">
-
-    <h2 class="text-center mb-4">
-        Why Choose SmartCart AI?
-    </h2>
+    <!-- Today's Best Deals Banner -->
     <section class="container my-5">
+        <div class="deals-banner p-5 text-center position-relative overflow-hidden">
+            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 fs-6">
+                🔥 Limited Time Offer
+            </span>
+            <h2 class="display-5 fw-bold mb-3">Today's Best Deals</h2>
+            <p class="lead max-w-600 mx-auto opacity-90 mb-4">
+                Save up to <strong>50% OFF</strong> on selected Electronics, Laptops, and Fashion products.
+            </p>
+            <a href="products.html" class="btn btn-light text-primary btn-lg rounded-pill fw-bold px-5 shadow">
+                Shop Deals Now
+            </a>
+        </div>
+    </section>
 
-    <div class="bg-primary text-white rounded-4 p-5 text-center">
+    <!-- Testimonials Section -->
 
-        <h2>🔥 Today's Best Deals</h2>
-        <section class="container my-5">
-
-    <h2 class="text-center mb-5">
-        What Our Customers Say
-    </h2>
-
-    <div class="row">
-
-        <div class="col-md-4">
-
-            <div class="card shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <h5>⭐⭐⭐⭐⭐</h5>
-
-                    <p>
-                        Amazing AI recommendations. Shopping has become much easier.
-                    </p>
-
-                    <h6>- Ali Khan</h6>
-
-                </div>
-
-            </div>
-
+ <section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="text-primary fw-bold text-uppercase">Reviews</span>
+            <h2 class="fw-bold fs-1">What Our Customers Say</h2>
         </div>
 
-        <div class="col-md-4">
-
-            <div class="card shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <h5>⭐⭐⭐⭐⭐</h5>
-
-                    <p>
-                        Fast delivery and excellent customer support.
-                    </p>
-
-                    <h6>- Sara Ahmed</h6>
-
-                </div>
-
+        <!-- E-Commerce Style Reviews Carousel -->
+        <div id="reviewsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
+            <div class="carousel-inner" id="reviews-container">
+                <!-- JavaScript se Dynamic Slides Load Honge -->
             </div>
 
+            <!-- Slider Buttons -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#reviewsCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#reviewsCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
         </div>
-
-        <div class="col-md-4">
-
-            <div class="card shadow-sm h-100">
-
-                <div class="card-body">
-
-                    <h5>⭐⭐⭐⭐⭐</h5>
-
-                    <p>
-                        The AI chatbot helped me find exactly what I needed.
-                    </p>
-
-                    <h6>- Ahmed Raza</h6>
-
-                </div>
-
-            </div>
-
-        </div>
-
     </div>
-
 </section>
-<section class="container my-5">
 
-    <div class="bg-light shadow rounded-4 p-5 text-center">
 
-        <h2 style="color: #006eff;">Subscribe to Our Newsletter</h2>
 
-        <p style="color: #006eff;">
-            Get updates about new products, AI features and exclusive discounts.
-        </p>
-
-        <div class="row justify-content-center">
-
-            <div class="col-md-6">
-
-                <input type="email"
-                       class="form-control mb-3"
-                       placeholder="Enter your email">
-
-                <button class="btn btn-primary w-100">
-                    Subscribe
-                </button>
-
-            </div>
-
+    <!-- Newsletter Section -->
+    <section class="py-5 bg-light">
+    <div class="container">
+        <div class="p-5 bg-white shadow-sm rounded-4 text-center">
+            <h2 class="fw-bold text-primary mb-2">Subscribe to Our Newsletter</h2>
+            <p class="text-muted mb-4">Get instant updates on new arrivals, AI feature rollouts, and exclusive discounts.</p>
+            
+            <form id="newsletter-form" class="d-flex justify-content-center gap-2 max-width-500 mx-auto" style="max-width: 500px;">
+                <input type="email" id="newsletter-email" class="form-control form-control-lg" placeholder="Enter your email address..." required>
+                <button type="submit" class="btn btn-primary btn-lg px-4 text-nowrap">Subscribe</button>
+            </form>
         </div>
-
     </div>
-
 </section>
-        <p class="mt-3">
-            Save up to <strong>50% OFF</strong> on selected products.
-            Limited time offers available for Electronics, Laptops, Mobiles and Fashion.
-        </p>
 
-        <a href="products.html" class="btn btn-light btn-lg mt-3">
-            Shop Now
-        </a>
+    <!-- Footer Container -->
+    <div id="footer-container"></div>
 
-    </div>
-
-</section>
-    
-
-</section>
-<script src="js/script.js"></script>
-<script src="main.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="main.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/layout.js"></script>
 </body>
+
 </html>
