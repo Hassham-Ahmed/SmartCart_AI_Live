@@ -47,6 +47,141 @@ client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 
 # ---------------------------------------------------------
+# PRODUCT / CATEGORY KNOWLEDGE
+# ---------------------------------------------------------
+STOPWORDS = [
+    "yaar", "mujhe", "khareedna", "hai", "kya", "tumhare", "per", "koi",
+    "accha", "dikhao", "show", "find", "search", "available", "have",
+    "need", "want", "please", "mein", "me", "karo", "daalo", "bro", "bhai",
+    "sir", "just", "only", "tell", "give", "recommend", "suggest", "check"
+]
+
+# Canonical product key -> words/phrases that identify it in a message.
+PRODUCT_MAP = {
+    "laptop": ["laptop", "laptops", "notebook"],
+    "phone": ["phone", "phones", "mobile", "mobiles", "smartphone"],
+    "iphone": ["iphone", "apple phone"],
+    "samsung": ["samsung", "galaxy"],
+    "hp": ["hp", "hewlett packard"],
+    "dell": ["dell", "xps"],
+    "lenovo": ["lenovo", "thinkpad"],
+    "watch": ["watch", "watches", "smartwatch"],
+    "headphones": ["headphones", "headphone", "earbuds"],
+    "camera": ["camera", "cameras", "dslr"],
+    "tablet": ["tablet", "tablets", "ipad"],
+    "tv": ["tv", "television", "monitor"],
+    "printer": ["printer", "printers"],
+    "keyboard": ["keyboard", "keyboards"],
+    "mouse": ["mouse", "mice"],
+    "airpods": ["airpods", "airpod", "handfree"],
+    "logitech": ["logitech"]
+}
+
+# Canonical product key -> the REAL category name stored in the database.
+# When a key resolves here, we filter by the `category` column exactly
+# instead of a loose LIKE search across name/brand/category - this avoids
+# false positives like "phone" matching inside the word "Headphones".
+CATEGORY_MAP = {
+    "laptop": "Laptops",
+    "phone": "Mobile Phones",
+    "watch": "Smart Watches",
+    "headphones": "Headphones & Earbuds",
+    "camera": "Cameras",
+    "tablet": "Tablets",
+    "tv": "TVs & Monitors",
+    "printer": "Printers",
+    "keyboard": "Keyboards & Mice",
+    "mouse": "Keyboards & Mice",
+    "airpods": "Headphones & Earbuds",
+}
+
+BRAND_KEYWORDS = ["hp", "dell", "lenovo", "asus", "acer", "msi", "samsung", "apple", "oneplus", "logitech", "airpods"]
+
+
+def clean_text(message):
+    """Lowercase the message and strip filler/stopwords (substring-safe order preserved)."""
+    text = message.lower().strip()
+    for word in STOPWORDS:
+        text = text.replace(word, " ")
+    return text
+
+
+def match_categories(message):
+    """
+    Return every distinct canonical product key mentioned in the message,
+    in the order they first appear. Used so "mobile or laptop" surfaces
+    BOTH categories instead of silently picking just one.
+    """
+    text = clean_text(message)
+    words = text.split()
+    found = []
+
+    # Brand + product combos first (e.g. "hp laptop" -> more specific than just "hp")
+    for brand in BRAND_KEYWORDS:
+        if brand in text:
+            for i, word in enumerate(words):
+                if word == brand and i + 1 < len(words):
+                    next_word = words[i + 1]
+                    for product, variants in PRODUCT_MAP.items():
+                        if next_word in variants or next_word == product:
+                            combo = f"{brand} {product}"
+                            if combo not in found:
+                                found.append(combo)
+                            break
+
+    # Whole-word product/category matches
+    for word in words:
+        for product, variants in PRODUCT_MAP.items():
+            if (word in variants or word == product) and product not in found:
+                found.append(product)
+                break
+
+    return found
+
+
+def search_by_keys(keys, min_price=None, max_price=None, limit=5):
+    """
+    Fetch products for one or more matched product keys. Category-mapped
+    keys (phone, laptop, watch, ...) filter on the exact `category` column;
+    everything else (brand names, "iphone", brand+product combos) falls
+    back to the free-text search across name/brand/category.
+    """
+    if not keys:
+        return []
+
+    if len(keys) == 1:
+        key = keys[0]
+        category = CATEGORY_MAP.get(key)
+        return search_products(
+            search=None if category else key,
+            category=category,
+            min_price=min_price,
+            max_price=max_price,
+            limit=limit
+        )
+
+    per_key_limit = max(2, limit // len(keys))
+    combined = []
+    seen_ids = set()
+
+    for key in keys:
+        category = CATEGORY_MAP.get(key)
+        results = search_products(
+            search=None if category else key,
+            category=category,
+            min_price=min_price,
+            max_price=max_price,
+            limit=per_key_limit
+        )
+        for product in results:
+            if product["id"] not in seen_ids:
+                combined.append(product)
+                seen_ids.add(product["id"])
+
+    return combined
+
+
+# ---------------------------------------------------------
 # HELPER FUNCTIONS
 # ---------------------------------------------------------
 def has_word(text, word_list):
@@ -84,79 +219,9 @@ def extract_price_filters(message):
 
 
 def extract_search_term(message):
-    """Pure manual extraction - NO LLM, NO hallucination"""
-    text = message.lower().strip()
-    
-    # Remove ALL stopwords
-    stopwords = [
-        "yaar", "mujhe", "khareedna", "hai", "kya", "tumhare", "per", "koi",
-        "accha", "dikhao", "show", "find", "search", "available", "have",
-        "need", "want", "please", "mein", "me", "karo", "daalo", "bro", "bhai",
-        "sir", "just", "only", "tell", "give", "recommend", "suggest", "check"
-    ]
-    
-    for word in stopwords:
-        text = text.replace(word, " ")
-    
-    # Product keywords mapping (normalized)
-    product_map = {
-        "laptop": ["laptop", "laptops", "notebook"],
-        "phone": ["phone", "phones", "mobile", "smartphone"],
-        "iphone": ["iphone", "apple phone"],
-        "samsung": ["samsung", "galaxy"],
-        "hp": ["hp", "hewlett packard"],
-        "dell": ["dell", "xps"],
-        "lenovo": ["lenovo", "thinkpad"],
-        "watch": ["watch", "watches", "smartwatch"],
-        "headphones": ["headphones", "headphone", "earbuds"],
-        "camera": ["camera", "cameras", "dslr"],
-        "tablet": ["tablet", "tablets", "ipad"],
-        "tv": ["tv", "television", "monitor"],
-        "printer": ["printer", "printers"],
-        "keyboard": ["keyboard", "keyboards"],
-        "mouse": ["mouse", "mice"],
-        "airpods":["airpods","airpod","handfree"],
-        "logitech":["logitech"]
-    }
-    
-    # Step 1: Check for brand + product combinations
-    brand_keywords = ["hp", "dell", "lenovo", "asus", "acer", "msi", "samsung", "apple", "oneplus","logitech","airpods"]
-    for brand in brand_keywords:
-        if brand in text:
-            # Check if product comes after brand
-            words = text.split()
-            for i, word in enumerate(words):
-                if word == brand and i + 1 < len(words):
-                    next_word = words[i + 1]
-                    for product, variants in product_map.items():
-                        if next_word in variants or next_word in product:
-                            return f"{brand} {product}"
-                    return brand  # Return just brand
-    
-    # Step 2: Check for single product keywords
-    words = text.split()
-    for word in words:
-        for product, variants in product_map.items():
-            if word in variants or word == product:
-                return product
-    
-    # Step 3: Check for product in original message (last resort)
-    for product, variants in product_map.items():
-        for variant in variants:
-            if variant in message.lower():
-                return product
-    
-    return ""  # No product found
-    
-    if not result:
-        product_keywords = ["laptop", "phone", "mobile", "iphone", "watch", "headphones", 
-                            "earbuds", "camera", "tablet", "tv", "monitor", "printer",
-                            "keyboard", "mouse", "speaker","airpods","airpod", "samsung", "hp", "dell", "lenovo"]
-        for word in product_keywords:
-            if word in message.lower():
-                return word
-    
-    return result
+    """Return the single best-matching product/category key (first mention wins)."""
+    matches = match_categories(message)
+    return matches[0] if matches else ""
 
 
 def extract_quantity(message, search_term=""):
@@ -230,13 +295,13 @@ def chat():
         # ---------------------------------------------------------
         if "wishlist" in msg_lower and any(k in msg_lower for k in ["add", "save", "daalo", "put", "keep"]):
             search_term = extract_search_term(message)
-            products = search_products(search=search_term if search_term else None, limit=1)
-            
+            products = search_by_keys([search_term] if search_term else [], limit=1)
+
             if not products and conversation:
                 for prev in reversed(conversation):
                     p_term = extract_search_term(prev.get("message", ""))
                     if p_term:
-                        products = search_products(search=p_term, limit=1)
+                        products = search_by_keys([p_term], limit=1)
                         if products: break
 
             if products:
@@ -252,13 +317,13 @@ def chat():
         # ---------------------------------------------------------
         if "cart" in msg_lower and any(k in msg_lower for k in ["add", "daalo", "put", "insert", "karo"]):
             search_term = extract_search_term(message)
-            products = search_products(search=search_term if search_term else None, limit=1)
-            
+            products = search_by_keys([search_term] if search_term else [], limit=1)
+
             if not products and conversation:
                 for prev in reversed(conversation):
                     p_term = extract_search_term(prev.get("message", ""))
                     if p_term:
-                        products = search_products(search=p_term, limit=1)
+                        products = search_by_keys([p_term], limit=1)
                         if products: break
 
             if products:
@@ -288,14 +353,14 @@ def chat():
 
         if is_buy_now_intent and not is_question:
             search_term = extract_search_term(message)
-            
-            products = search_products(search=search_term if search_term else None, limit=1)
-            
+
+            products = search_by_keys([search_term] if search_term else [], limit=1)
+
             if not products and conversation:
                 for prev in reversed(conversation):
                     p_term = extract_search_term(prev.get("message", ""))
                     if p_term:
-                        products = search_products(search=p_term, limit=1)
+                        products = search_by_keys([p_term], limit=1)
                         if products: break
                         
             if products:
@@ -385,34 +450,25 @@ def chat():
         print("====== PRODUCT SEARCH BLOCK ======")
         print("MESSAGE:", message)
         min_price, max_price = extract_price_filters(message)
-        search_term = extract_search_term(message)
-
-        if not search_term or len(search_term) < 2:
-            product_keywords = ["laptop", "laptops", "phone", "phones", "mobile", "iphone", 
-                                "samsung", "hp", "dell", "lenovo", "watch", "headphones", 
-                                "earbuds", "camera", "tablet", "tv", "monitor", "printer"]
-            for word in product_keywords:
-                if word in msg_lower:
-                    search_term = word
-                    break
+        matched_keys = match_categories(message)
+        search_term = matched_keys[0] if matched_keys else ""
 
         is_search_intent = (
-            any(k in msg_lower for k in ["search", "find", "show", "available", "have", 
+            any(k in msg_lower for k in ["search", "find", "show", "available", "have",
                                         "dekho", "dikhao", "dhoondo", "hai", "available"])
-            or any(p in msg_lower for p in ["laptop", "phone", "mobile", "iphone", "watch", "headphones"])
+            or bool(matched_keys)
             or (min_price is not None or max_price is not None)
-            or (search_term and len(search_term) >= 2)
         )
 
-        if is_search_intent and (search_term or min_price or max_price):
-            products = search_products(
-                search=search_term if search_term else None, 
-                min_price=min_price, 
-                max_price=max_price, 
+        if is_search_intent and (matched_keys or min_price or max_price):
+            products = search_by_keys(
+                matched_keys,
+                min_price=min_price,
+                max_price=max_price,
                 limit=5
             )
             print("FOUND PRODUCTS:", len(products) if products else 0)
-            
+
             if products:
                 reply_lines = []
                 for p in products:
@@ -422,9 +478,14 @@ def chat():
                         f"Price: Rs. {float(p['price']):,.0f} | Stock: {p['stock']}"
                     )
                     reply_lines.append(line)
-                
+
+                intro = "Here are the matching products from our database:"
+                if len(matched_keys) >= 2:
+                    labels = [CATEGORY_MAP.get(k, k).title() for k in matched_keys]
+                    intro = f"Here's what I found across {' and '.join(labels)}:"
+
                 return jsonify({
-                    "reply": "Here are the matching products from our database:\n\n" + "\n\n".join(reply_lines),
+                    "reply": intro + "\n\n" + "\n\n".join(reply_lines),
                     "products": products
                 })
             else:
@@ -436,40 +497,28 @@ def chat():
         # 9. GENERAL AI CHAT (Gemini Fallback - WITH CARDS)
         # ---------------------------------------------------------
         if client:
-            search_term = extract_search_term(message)
-            
-            if not search_term or len(search_term) < 2:
-                product_keywords = ["laptop", "laptops", "phone", "phones", "mobile", "iphone", 
-                                    "samsung", "galaxy", "hp", "dell", "lenovo", "watch", "headphones", 
-                                    "earbuds", "camera", "tablet", "tv", "monitor", "printer", 
-                                    "keyboard", "mouse", "speaker"]
-                for word in product_keywords:
-                    if word in msg_lower:
-                        search_term = word
+            matched_keys = match_categories(message)
+
+            if not matched_keys and conversation:
+                for prev in reversed(conversation):
+                    prev_msg = prev.get("message") or prev.get("content") or ""
+                    matched_keys = match_categories(str(prev_msg))
+                    if matched_keys:
                         break
-                
-                if (not search_term or len(search_term) < 2) and conversation:
-                    for prev in reversed(conversation):
-                        prev_msg = prev.get("message") or prev.get("content") or ""
-                        for word in product_keywords:
-                            if word in str(prev_msg).lower():
-                                search_term = word
-                                break
-                        if search_term:
-                            break
 
             print("=" * 60)
             print("USER:", message)
-            print("SEARCH TERM:", search_term)
-            db_products = search_products(search=search_term if search_term else None, limit=5)
-            
+            print("MATCHED KEYS:", matched_keys)
+            db_products = search_by_keys(matched_keys, limit=5)
+
             print("FOUND:", len(db_products) if db_products else 0)
             print("=" * 60)
-            
+
             # ✅ FIX: If products found, return them with cards
-            if db_products and search_term:
+            if db_products and matched_keys:
+                label = " and ".join(CATEGORY_MAP.get(k, k).title() for k in matched_keys)
                 return jsonify({
-                    "reply": f"🛍️ I found these {search_term} products in our database:",
+                    "reply": f"🛍️ I found these {label} products in our database:",
                     "products": db_products  # 👈 This triggers cards
                 })
             

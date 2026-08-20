@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', system-ui, sans-serif;
+
+  --color-primary-50: #eaf2ff;
+  --color-primary-100: #d6e6ff;
+  --color-primary-200: #adccff;
+  --color-primary-300: #7eaeff;
+  --color-primary-400: #4a8bff;
+  --color-primary-500: #0d6efd;
+  --color-primary-600: #0b5ed7;
+  --color-primary-700: #0949ab;
+  --color-primary-800: #0a3a85;
+  --color-primary-900: #0a192f;
+
+  --color-success-500: #198754;
+  --color-success-600: #157347;
+  --color-danger-500: #dc3545;
+  --color-danger-600: #bb2d3b;
+  --color-warning-500: #ffc107;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fbff;
+  color: #212529;
+}
+
+/* SweetAlert2 z-index above sticky navbar */
+.swal2-container {
+  z-index: 10000;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 font-semibold text-sm transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+}
+@utility btn-primary {
+  @apply btn bg-primary-500 text-white hover:bg-primary-600;
+}
+@utility btn-success {
+  @apply btn bg-success-500 text-white hover:bg-success-600;
+}
+@utility btn-danger {
+  @apply btn bg-danger-500 text-white hover:bg-danger-600;
+}
+@utility btn-warning {
+  @apply btn bg-warning-500 text-gray-900 hover:brightness-95;
+}
+@utility btn-outline-light {
+  @apply btn border border-white/40 text-white hover:bg-white/10;
+}
+@utility btn-outline-primary {
+  @apply btn border border-primary-500 text-primary-600 hover:bg-primary-50;
+}
+@utility btn-outline-success {
+  @apply btn border border-success-500 text-success-600 hover:bg-green-50;
+}
+@utility btn-outline-danger {
+  @apply btn border border-danger-500 text-danger-600 hover:bg-red-50;
+}
+@utility btn-outline-dark {
+  @apply btn border border-gray-800 text-gray-800 hover:bg-gray-900 hover:text-white;
+}
+
+@utility card {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+}
+@utility card-hover {
+  @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
+}
+
+@utility form-input {
+  @apply w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 transition;
+}
+@utility form-label {
+  @apply block text-sm font-medium text-gray-600 mb-1.5;
+}
+
+@utility badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+}
