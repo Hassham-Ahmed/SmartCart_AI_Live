@@ -1,4 +1,5 @@
 import os
+import tempfile
 from werkzeug.utils import secure_filename
 from flask import Blueprint, request
 from config import get_db
@@ -6,7 +7,7 @@ from config import get_db
 auth = Blueprint("auth", __name__)
 
 # Save directory configuration for Profile Pictures
-UPLOAD_FOLDER = "static/uploads/profiles"
+UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), "uploads", "profiles")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ---------------- REGISTER ----------------
@@ -198,9 +199,9 @@ def upload_profile_image():
 
     if file and user_id:
         filename = secure_filename(f"user_{user_id}_{file.filename}")
-        relative_path = f"static/uploads/profiles/{filename}"
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
         
-        file.save(relative_path)
+        file.save(file_path)
 
         db = get_db()
         cursor = db.cursor()
