@@ -385,7 +385,7 @@ def get_wishlist(user_id):
         if db:
             db.close()
 
-def place_order(user_id, shipping_address, payment_method):
+def place_order(user_id, shipping_address, payment_method, product_id=None, quantity=1):
     db = None
     cursor = None
 
@@ -393,99 +393,58 @@ def place_order(user_id, shipping_address, payment_method):
         db = get_db()
         cursor = db.cursor(dictionary=True)
 
-        # Get cart
-        cursor.execute(
-            """
-            SELECT
-                shopping_cart.id AS cart_id,
-                shopping_cart.product_id,
-                shopping_cart.quantity,
-                products.name,
-                products.price,
-                products.stock
-            FROM shopping_cart
-            JOIN products
-                ON shopping_cart.product_id = products.id
-            WHERE shopping_cart.user_id=%s
-            """,
-            (user_id,)
-        )
+        # Direct Buy Logic inside MCP Tool
+        if product_id:
+            cursor.execute("SELECT id, name, price, stock FROM products WHERE id=%s", (product_id,))
+            product = cursor.fetchone()
+            if not product or product["stock"] < quantity:
+                return {"success": False, "message": "Product unavailable or out of stock."}
 
-        cart_items = cursor.fetchall()
+            total = float(product["price"]) * int(quantity)
+            
+            cursor.execute("""
+                INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (user_id, total, "Pending", payment_method, shipping_address))
+            
+            order_id = cursor.lastrowid
+            cursor.execute("UPDATE products SET stock = stock - %s WHERE id=%s", (quantity, product_id))
+            db.commit()
 
-        if not cart_items:
             return {
-                "success": False,
-                "message": "Your shopping cart is empty."
+                "success": True,
+                "message": "Order placed successfully!",
+                "order_id": order_id,
+                "total_amount": total,
+                "payment_method": payment_method,
+                "shipping_address": shipping_address
             }
 
-        # Check stock and calculate total
-        total = 0
+        # Regular Cart Logic...
+        cursor.execute("""
+            SELECT shopping_cart.id AS cart_id, shopping_cart.product_id, shopping_cart.quantity,
+                   products.name, products.price, products.stock
+            FROM shopping_cart
+            JOIN products ON shopping_cart.product_id = products.id
+            WHERE shopping_cart.user_id=%s
+        """, (user_id,))
 
-        for item in cart_items:
+        cart_items = cursor.fetchall()
+        if not cart_items:
+            return {"success": False, "message": "Your shopping cart is empty."}
 
-            if item["quantity"] > item["stock"]:
-                return {
-                    "success": False,
-                    "message": (
-                        f"Not enough stock for {item['name']}. "
-                        f"Only {item['stock']} units are available."
-                    )
-                }
+        total = sum(float(item["price"]) * item["quantity"] for item in cart_items)
 
-            total += (
-                float(item["price"]) *
-                item["quantity"]
-            )
-
-        # Create order
-        cursor.execute(
-            """
-            INSERT INTO orders
-            (
-                user_id,
-                total_amount,
-                status,
-                payment_method,
-                shipping_address
-            )
+        cursor.execute("""
+            INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address)
             VALUES (%s, %s, %s, %s, %s)
-            """,
-            (
-                user_id,
-                total,
-                "Pending",
-                payment_method,
-                shipping_address
-            )
-        )
+        """, (user_id, total, "Pending", payment_method, shipping_address))
 
         order_id = cursor.lastrowid
-
-        # Reduce stock
         for item in cart_items:
+            cursor.execute("UPDATE products SET stock = stock - %s WHERE id=%s", (item["quantity"], item["product_id"]))
 
-            cursor.execute(
-                """
-                UPDATE products
-                SET stock = stock - %s
-                WHERE id=%s
-                """,
-                (
-                    item["quantity"],
-                    item["product_id"]
-                )
-            )
-
-        # Clear cart
-        cursor.execute(
-            """
-            DELETE FROM shopping_cart
-            WHERE user_id=%s
-            """,
-            (user_id,)
-        )
-
+        cursor.execute("DELETE FROM shopping_cart WHERE user_id=%s", (user_id,))
         db.commit()
 
         return {
@@ -499,24 +458,11 @@ def place_order(user_id, shipping_address, payment_method):
         }
 
     except Exception as e:
-
-        if db:
-            db.rollback()
-
-        print("PLACE ORDER ERROR:", e)
-
-        return {
-            "success": False,
-            "message": "Unable to place order."
-        }
-
+        if db: db.rollback()
+        return {"success": False, "message": f"Unable to place order: {str(e)}"}
     finally:
-
-        if cursor:
-            cursor.close()
-
-        if db:
-            db.close()
+        if cursor: cursor.close()
+        if db: db.close()
 
 def get_orders(user_id):
     db = None

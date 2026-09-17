@@ -22,6 +22,10 @@ export default function Products() {
   const [brand, setBrand] = useState("");
   const [priceRange, setPriceRange] = useState("");
 
+  // Pagination State (30 items per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 32;
+
   const category = searchParams.get("category") || "";
   const search = searchParams.get("search") || "";
 
@@ -36,13 +40,22 @@ export default function Products() {
     });
   }, [category, search]);
 
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, search, brand, priceRange]);
+
   const brands = useMemo(
     () => [...new Set(allProducts.map((p) => p.brand).filter(Boolean))].sort(),
     [allProducts]
   );
 
-  const products = useMemo(() => {
+    const products = useMemo(() => {
     return allProducts.filter((p) => {
+      // Exclude products without a valid image or having default/placeholder images
+      if (!p.image || p.image.includes("default.jpg") || p.image.includes("placeholder")) {
+        return false;
+      }
       if (brand && p.brand !== brand) return false;
       if (priceRange) {
         const price = Number(p.price);
@@ -56,6 +69,18 @@ export default function Products() {
       return true;
     });
   }, [allProducts, brand, priceRange]);
+
+  // Slice products for Pagination
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const currentProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return products.slice(start, start + itemsPerPage);
+  }, [products, currentPage]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -150,11 +175,50 @@ export default function Products() {
         ) : products.length === 0 ? (
           <p className="text-center text-gray-400 py-16">No products found.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-16">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-8">
+              {currentProducts.map((product) => (
+                <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} onAddToWishlist={handleAddToWishlist} />
+              ))}
+            </div>
+
+            {/* Pagination Component */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 pb-16">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border rounded-lg bg-white disabled:opacity-40 text-sm font-medium"
+                >
+                  Previous
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .map((page, idx, arr) => (
+                    <div key={page} className="flex items-center gap-1">
+                      {idx > 0 && arr[idx - 1] !== page - 1 && <span className="px-1 text-gray-400">...</span>}
+                      <button
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold ${
+                          currentPage === page ? "bg-primary-900 text-white" : "bg-white border text-gray-700"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </div>
+                  ))}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 border rounded-lg bg-white disabled:opacity-40 text-sm font-medium"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

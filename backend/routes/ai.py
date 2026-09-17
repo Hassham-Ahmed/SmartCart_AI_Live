@@ -433,9 +433,12 @@ def chat():
         # 7. CONFIRM ORDER / CHECKOUT
         # ---------------------------------------------------------
         is_checkout_intent = any(k in msg_lower for k in ["place order", "checkout", "confirm order", "order place karo", "checkout karo"])
+
         if (asked_for_address and not is_explicit_command) or is_checkout_intent:
             shipping_address = message if (asked_for_address and not is_checkout_intent) else data.get("shipping_address", "North Karachi, Pakistan")
-            payment = data.get("payment_method", "Cash On Delivery")
+            
+            # ✅ Exact payment_method dynamic capture from frontend payload
+            payment = data.get("payment_method") or "Cash on Delivery"
             
             res = place_order(user_id=active_user_id, shipping_address=shipping_address, payment_method=payment)
             if res.get("success"):

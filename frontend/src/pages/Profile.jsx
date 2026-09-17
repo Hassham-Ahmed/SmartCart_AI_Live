@@ -11,6 +11,10 @@ export default function Profile() {
   const [passwordForm, setPasswordForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  
+  // Profile Picture States
+  const [imagePreview, setImagePreview] = useState("https://via.placeholder.com/150");
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const loadProfile = useCallback(() => {
     if (!user) return;
@@ -24,6 +28,9 @@ export default function Profile() {
           city: data.city || "",
           address: data.address || "",
         });
+        if (data.image) {
+          setImagePreview(data.image.startsWith("http") ? data.image : `http://localhost:5000/${data.image}`);
+        }
       }
     });
   }, [user]);
@@ -35,9 +42,30 @@ export default function Profile() {
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   const updatePassword = (field) => (e) => setPasswordForm((f) => ({ ...f, [field]: e.target.value }));
 
+  // Image Selection Handler
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSaveProfile = async () => {
     setSaving(true);
-    const { data } = await authApi.updateProfile({ id: user.id, ...form });
+    
+    // Agar Backend Multipart/FormData accept karta hai photo save ke liye
+    const formData = new FormData();
+    formData.append("id", user.id);
+    Object.keys(form).forEach((key) => formData.append(key, form[key]));
+    if (selectedFile) {
+      formData.append("image", selectedFile);
+    }
+
+    // Direct JSON fallback agar backend simple JSON input leta hai:
+    const payload = selectedFile ? formData : { id: user.id, ...form };
+
+    const { data } = await authApi.updateProfile(payload);
     setSaving(false);
     Swal.fire({ title: "Updated!", text: data.message || "Profile updated successfully.", icon: "success" });
     loadProfile();
@@ -66,11 +94,31 @@ export default function Profile() {
       <div className="grid lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4">
           <div className="card p-6 text-center">
-            <img
-              src="https://via.placeholder.com/150"
-              alt="Profile"
-              className="w-32 h-32 rounded-full object-cover border-2 border-primary-500 mx-auto mb-4"
-            />
+            
+            {/* Profile Avatar & Upload Button Wrapper */}
+            <div className="relative w-32 h-32 mx-auto mb-4 group">
+              <img
+                src={imagePreview}
+                alt="Profile"
+                className="w-32 h-32 rounded-full object-cover border-4 border-primary-500 shadow-md"
+                onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+              />
+              <label 
+                htmlFor="profile-upload" 
+                className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <i className="fa-solid fa-camera text-xl mb-1" />
+                <span className="text-xs font-semibold">Change</span>
+              </label>
+              <input 
+                id="profile-upload" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                className="hidden" 
+              />
+            </div>
+
             <h4 className="font-bold text-lg mb-1">{profile?.full_name || "Loading..."}</h4>
             <p className="text-gray-400 text-sm mb-4">{profile?.email || "loading@example.com"}</p>
 

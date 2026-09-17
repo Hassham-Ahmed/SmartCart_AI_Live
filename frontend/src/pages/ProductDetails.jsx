@@ -81,9 +81,10 @@ export default function ProductDetails() {
         <div className="grid lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 text-center">
             <img
-              src={product.image || `https://picsum.photos/450/450?random=${id}`}
+              src={product.image ? `http://localhost:5000/${product.image}` : `https://picsum.photos/450/450?random=${id}`}
               alt={product.name}
               className="rounded-2xl shadow-sm border w-full object-cover max-h-[420px]"
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/450?text=Product+Image'; }}
             />
           </div>
 
