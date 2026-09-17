@@ -44,11 +44,11 @@ if __name__ == "__main__":
 
 def get_db():
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        port=int(os.getenv("DB_PORT", 28028)),
-        ssl_verify_identity=False,
-        ssl_disabled=False
+        host=os.getenv("DB_HOST", "YOUR_AIVEN_HOST_HERE"),  # e.g. mysql-xxxx.aivencloud.com
+        user=os.getenv("DB_USER", "avnadmin"),
+        password=os.getenv("DB_PASSWORD", "YOUR_AIVEN_PASSWORD_HERE"),
+        database=os.getenv("DB_NAME", "defaultdb"),
+        port=int(os.getenv("DB_PORT", 28028)),              # Aiven Port
+        ssl_disabled=False,
+        ssl_verify_identity=False
     )
