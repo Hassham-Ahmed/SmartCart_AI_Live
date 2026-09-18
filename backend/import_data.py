@@ -1,10 +1,13 @@
 import os
 import re
 import pandas as pd
-from PIL import Image  # Added Pillow for integrity verification
+from PIL import Image
 from config import get_db
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Live backend domain
+DOMAIN_URL = "https://smart-cart-ai-live.vercel.app"
 
 EXCEL_FILE = os.path.join(BASE_DIR, "Copy-of-fyp-products.xlsx")
 if not os.path.exists(EXCEL_FILE):
@@ -21,13 +24,17 @@ if not os.path.exists(EXCEL_FILE):
 
 xls = pd.ExcelFile(EXCEL_FILE)
 
-# Image Map: Stores lowercased names and Product IDs
+# Image Map: Full URL store karega
 image_map = {}
 if os.path.exists(IMAGE_FOLDER):
     for file in os.listdir(IMAGE_FOLDER):
         if file.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
             name_without_ext = os.path.splitext(file)[0].strip().lower()
-            image_map[name_without_ext] = f"static/images/{file}"
+            # Dynamic full live URL mapping
+            image_map[name_without_ext] = {
+                "rel_path": f"static/images/{file}",
+                "full_url": f"{DOMAIN_URL}/static/images/{file}"
+            }
 
 def is_valid_image(filepath):
     """Check if image file exists and is not corrupted"""
@@ -35,7 +42,7 @@ def is_valid_image(filepath):
         return False
     try:
         with Image.open(filepath) as img:
-            img.verify() # Verify image integrity
+            img.verify()
         return True
     except Exception:
         return False
@@ -48,8 +55,11 @@ def parse_price(val):
 
 db = get_db()
 cursor = db.cursor()
-# 1. Automatic Table Creation (If not exists)
-create_table_query = """
+
+print("Step 2: Creating all database tables if not exist...")
+
+# 1. Products Table
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -57,13 +67,109 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR(100),
     price DECIMAL(10, 2),
     stock INT DEFAULT 10,
-    image VARCHAR(255),
+    image VARCHAR(500),
     description TEXT
 );
-"""
-cursor.execute(create_table_query)
+""")
+
+# 2. Users Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
+# 3. Cart Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS cart (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    product_id INT,
+    quantity INT DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+""")
+
+# 4. Wishlist Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS wishlist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    product_id INT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+""")
+
+# 5. Orders Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    total_amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    shipping_address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+""")
+
+# 6. Order Items Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    product_id INT,
+    quantity INT DEFAULT 1,
+    price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+""")
+
+# 7. Reviews Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT,
+    user_id INT,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+""")
+
+# 8. Subscribers Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS subscribers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
+# 9. Contact Messages Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255),
+    message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
 db.commit()
-print("✅ Table 'products' successfully created/verified!")
+print("✅ Saare 9 Tables successfully create/verify ho gaye hain!")
 
 try:
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
@@ -88,18 +194,18 @@ try:
             if not product_name or product_name.lower() == 'nan':
                 continue
 
-            # Strict Image Matching & Verification (No Default Fallbacks)
-            image_rel_path = image_map.get(product_id_str) or image_map.get(product_name.lower())
+            # Image details match karna
+            img_info = image_map.get(product_id_str) or image_map.get(product_name.lower())
             
-            if image_rel_path:
-                full_img_path = os.path.join(BASE_DIR, image_rel_path)
+            if img_info:
+                full_img_path = os.path.join(BASE_DIR, img_info["rel_path"])
                 if not is_valid_image(full_img_path):
                     skipped_count += 1
-                    continue # Corrupt image product skipped
-                matched_image = image_rel_path
+                    continue
+                matched_image_url = img_info["full_url"]
             else:
                 skipped_count += 1
-                continue # Missing image product skipped
+                continue
 
             price = parse_price(row_dict.get('Price(PKR)', row_dict.get('Price', 0)))
             stock_val = row_dict.get('STOCK', row_dict.get('Stock', 10))
@@ -116,7 +222,7 @@ try:
             INSERT INTO products (name, brand, category, price, stock, image, description)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
-            values = (product_name, brand, category, price, stock, matched_image, desc)
+            values = (product_name, brand, category, price, stock, matched_image_url, desc)
             
             cursor.execute(sql, values)
             success_count += 1
@@ -126,7 +232,7 @@ try:
 
     db.commit()
     print("--------------------------------------------------")
-    print(f"🎉 SUCCESS! Total {success_count} valid products imported. ({skipped_count} skipped due to broken/missing images)")
+    print(f"🎉 SUCCESS! Total {success_count} valid products full image URLs ke saath import ho gaye. ({skipped_count} skipped)")
 
 except Exception as e:
     db.rollback()

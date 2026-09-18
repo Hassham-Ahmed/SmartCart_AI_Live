@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -39,3 +39,7 @@ def test():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+@app.route('/static/images/<path:filename>')
+def serve_images(filename):
+    return send_from_directory(os.path.join(app.root_path, 'static', 'images'), filename)
