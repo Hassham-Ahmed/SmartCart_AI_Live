@@ -24,6 +24,9 @@ export default function Categories() {
               src={`https://picsum.photos/300/200?random=${encodeURIComponent(cat.category)}`}
               alt={cat.category}
               className="w-full h-40 object-cover"
+              onError={(e) => {
+                e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+              }}
             />
             <div className="p-5">
               <div className="text-3xl mb-2">{categoryIcon(cat.category)}</div>

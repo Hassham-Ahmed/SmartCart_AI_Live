@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { productsApi } from "../api/client";
 import { useCart } from "../context/CartContext";
 import useRequireLogin from "../hooks/useRequireLogin";
+import { getImageUrl } from "../config";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -81,10 +82,12 @@ export default function ProductDetails() {
         <div className="grid lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 text-center">
             <img
-              src={product.image ? `http://localhost:5000/${product.image}` : `https://picsum.photos/450/450?random=${id}`}
+              src={getImageUrl(product.image)}
               alt={product.name}
               className="rounded-2xl shadow-sm border w-full object-cover max-h-[420px]"
-              onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/450?text=Product+Image'; }}
+              onError={(e) => {
+                e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+              }}
             />
           </div>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getImageUrl } from "../config";
 
 function Stars({ rating = 0, reviewCount = 0 }) {
   const rounded = Math.round(rating);
@@ -21,7 +22,7 @@ export default function AIProductCard({ product, onAddToCart, onAddToWishlist, o
   const [busy, setBusy] = useState(null); // 'cart' | 'wishlist' | null
 
   const inStock = (product.stock ?? 0) > 0;
-  const imageUrl = product.image_url || product.image || "https://via.placeholder.com/150";
+
   const handle = async (action, fn) => {
     if (busy) return;
     setBusy(action);
@@ -33,19 +34,20 @@ export default function AIProductCard({ product, onAddToCart, onAddToWishlist, o
   };
 
   return (
-    
     <div className="bg-white rounded-xl border p-3 flex flex-col gap-2 text-sm w-full sm:w-64">
-    
-    {/* Top Image Section */}
-    <div className="w-full h-32 overflow-hidden rounded-lg bg-gray-100 mb-1">
-      <img
-        src={imageUrl}
-        alt={product.name}
-        className="w-full h-full object-cover"
-        onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
-      />
-    </div>
-    
+      {/* Top Image Section */}
+      <div className="w-full h-32 overflow-hidden rounded-lg bg-gray-100 mb-1">
+        <img
+          src={getImageUrl(product.image)}
+          alt={product.name}
+          className="w-full h-32 object-cover rounded-lg mb-2"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+          }}
+        />
+      </div>
+
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-semibold text-gray-800 leading-tight">{product.name}</p>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { productsApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { getImageUrl } from "../config";
 
 export default function Cart() {
   const { user } = useAuth();
@@ -58,12 +59,13 @@ export default function Cart() {
                   <tr key={item.id}>
                     <td className="px-4 py-3 font-medium">{item.name}</td>
                     <td className="px-4 py-3">
-                      
-                      <img 
-                        src={item.image?.startsWith("http") ? item.image : `http://localhost:5000/${item.image}`} 
-                        alt={item.name} 
-                        className="w-16 h-16 object-cover rounded-lg" 
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                      <img
+                        src={getImageUrl(item.image)}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+                        }}
                       />
                     </td>
                     <td className="px-4 py-3">Rs. {Number(item.price).toLocaleString()}</td>

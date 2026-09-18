@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import { productsApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { getImageUrl } from "../config";
 
 export default function Wishlist() {
   const { user } = useAuth();
@@ -53,11 +54,13 @@ export default function Wishlist() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {items.map((product) => (
               <div key={product.id} className="card overflow-hidden">
-                <img 
-                  src={product.image?.startsWith("http") ? product.image : `http://localhost:5000/${product.image}`} 
-                  alt={product.name} 
-                  className="w-full h-52 object-cover" 
-                  onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                <img
+                  src={getImageUrl(product.image)}
+                  alt={product.name}
+                  className="w-full h-52 object-cover"
+                  onError={(e) => {
+                    e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+                  }}
                 />
                 <div className="p-4">
                   <h5 className="font-semibold mb-1 line-clamp-2">{product.name}</h5>

@@ -39,14 +39,6 @@ export const productsApi = {
     const qs = query.toString();
     return request(`/api/products/${qs ? `?${qs}` : ""}`);
   },
-  // ✅ FIXED (client_2.js)
-  getProducts: (params = {}) => {
-    const query = new URLSearchParams();
-    if (params.category) query.set("category", params.category);
-    if (params.search) query.set("search", params.search);
-    const qs = query.toString();
-    return request(`/api/products${qs ? `?${qs}` : ""}`); // Trailing slash removed
-  },
   addProduct: (payload) => request("/api/products/add-product", { method: "POST", body: payload }),
   updateProduct: (id, payload) => request(`/api/products/update-product/${id}`, { method: "PUT", body: payload }),
   deleteProduct: (id) => request(`/api/products/delete-product/${id}`, { method: "DELETE" }),
