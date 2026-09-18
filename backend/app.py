@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -40,24 +39,3 @@ def test():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-# Local development ke liye .env load karein
-load_dotenv()
-
-def get_db():
-    host = os.environ.get("DB_HOST")
-    user = os.environ.get("DB_USER")
-    password = os.environ.get("DB_PASSWORD")
-    database = os.environ.get("DB_NAME")
-    port = int(os.environ.get("DB_PORT", 28028))
-
-    return mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database,
-        port=port,
-        ssl_disabled=False,
-        ssl_verify_identity=False
-    )
