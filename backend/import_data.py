@@ -48,6 +48,22 @@ def parse_price(val):
 
 db = get_db()
 cursor = db.cursor()
+# 1. Automatic Table Creation (If not exists)
+create_table_query = """
+CREATE TABLE IF NOT EXISTS products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    brand VARCHAR(100),
+    category VARCHAR(100),
+    price DECIMAL(10, 2),
+    stock INT DEFAULT 10,
+    image VARCHAR(255),
+    description TEXT
+);
+"""
+cursor.execute(create_table_query)
+db.commit()
+print("✅ Table 'products' successfully created/verified!")
 
 try:
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
