@@ -34,7 +34,7 @@ if os.path.exists(IMAGE_FOLDER):
             name_without_ext = os.path.splitext(file)[0].strip().lower()
             image_map[name_without_ext] = {
                 "rel_path": os.path.join("static", "images", file),
-                "filename": file,
+                "full_url": f"{BACKEND_URL}/static/images/{file}",  # ✅ FULL URL save karo
             }
 
 def is_valid_image(filepath):
@@ -202,8 +202,7 @@ try:
                 if not is_valid_image(full_img_path):
                     skipped_count += 1
                     continue
-                # ✅ Database mein sirf filename save hoga
-                matched_image = img_info["filename"]
+                matched_image = img_info["full_url"]   # ✅ Full URL
             else:
                 skipped_count += 1
                 continue
@@ -236,6 +235,7 @@ try:
     print(f"🎉 SUCCESS! Total {success_count} products import ho gaye. ({skipped_count} skipped)")
     print(f"ℹ️  Database mein sirf filenames save hui hain.")
     print(f"ℹ️  Frontend inhe {FRONTEND_URL}/images/<filename> se load karega.")
+    print(f"ℹ️  Full image URLs DB mein save ho gayi hain (backend se serve hongi).")
 
 except Exception as e:
     db.rollback()
