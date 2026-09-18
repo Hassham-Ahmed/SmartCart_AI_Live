@@ -59,7 +59,7 @@ export default function Wishlist() {
                   alt={product.name}
                   className="w-full h-52 object-cover"
                   onError={(e) => {
-                    e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+                    e.target.src = "https://placehold.co/600x600/e5e7eb/9ca3af?text=No+Image";
                   }}
                 />
                 <div className="p-4">

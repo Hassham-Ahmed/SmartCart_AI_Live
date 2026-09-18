@@ -86,7 +86,7 @@ export default function ProductDetails() {
               alt={product.name}
               className="rounded-2xl shadow-sm border w-full object-cover max-h-[420px]"
               onError={(e) => {
-                e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+                e.target.src = "https://placehold.co/600x600/e5e7eb/9ca3af?text=No+Image";
               }}
             />
           </div>

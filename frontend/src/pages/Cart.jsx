@@ -64,7 +64,7 @@ export default function Cart() {
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg"
                         onError={(e) => {
-                          e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+                          e.target.src = "https://placehold.co/600x600/e5e7eb/9ca3af?text=No+Image";
                         }}
                       />
                     </td>

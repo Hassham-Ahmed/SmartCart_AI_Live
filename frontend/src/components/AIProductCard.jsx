@@ -43,7 +43,7 @@ export default function AIProductCard({ product, onAddToCart, onAddToWishlist, o
           className="w-full h-32 object-cover rounded-lg mb-2"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "https://placehold.co/300x300/png?text=No+Image";
+            e.target.src = "https://placehold.co/600x600/e5e7eb/9ca3af?text=No+Image";
           }}
         />
       </div>
