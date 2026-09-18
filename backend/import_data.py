@@ -6,13 +6,15 @@ from config import get_db
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Live backend domain
-DOMAIN_URL = "https://smart-cart-ai-live.vercel.app"
+# ✅ FIX: Yahan apna ASLI frontend Vercel URL daalo
+# Example: "https://smartcart-ai.vercel.app"
+FRONTEND_URL = "https://smart-cart-ai-frontend-live-w24x.vercel.app"   # 👈 YAHAN APNA URL DAALO
 
 EXCEL_FILE = os.path.join(BASE_DIR, "Copy-of-fyp-products.xlsx")
 if not os.path.exists(EXCEL_FILE):
     EXCEL_FILE = os.path.join(os.path.dirname(BASE_DIR), "Copy-of-fyp-products.xlsx")
 
+# Backend ke static/images folder (jahan images abhi hain)
 IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "images")
 
 print("--------------------------------------------------")
@@ -24,20 +26,18 @@ if not os.path.exists(EXCEL_FILE):
 
 xls = pd.ExcelFile(EXCEL_FILE)
 
-# Image Map: Full URL store karega
+# Image Map: sirf filename store karega, frontend khud URL banayega
 image_map = {}
 if os.path.exists(IMAGE_FOLDER):
     for file in os.listdir(IMAGE_FOLDER):
         if file.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
             name_without_ext = os.path.splitext(file)[0].strip().lower()
-            # Dynamic full live URL mapping
             image_map[name_without_ext] = {
-                "rel_path": f"static/images/{file}",
-                "full_url": f"{DOMAIN_URL}/static/images/{file}"
+                "rel_path": os.path.join("static", "images", file),
+                "filename": file,
             }
 
 def is_valid_image(filepath):
-    """Check if image file exists and is not corrupted"""
     if not os.path.exists(filepath):
         return False
     try:
@@ -183,10 +183,10 @@ try:
     for sheet_name in xls.sheet_names:
         df_sheet = pd.read_excel(xls, sheet_name=sheet_name)
         sheet_added = 0
-        
+
         for index, row in df_sheet.iterrows():
             row_dict = {str(k).strip(): v for k, v in row.to_dict().items()}
-            
+
             product_name = str(row_dict.get('PRODUCT NAME', row_dict.get('MODEL', ''))).strip()
             raw_product_id = row_dict.get('PRODUCT ID', '')
             product_id_str = str(raw_product_id).strip().lower() if pd.notna(raw_product_id) else ''
@@ -196,13 +196,14 @@ try:
 
             # Image details match karna
             img_info = image_map.get(product_id_str) or image_map.get(product_name.lower())
-            
+
             if img_info:
                 full_img_path = os.path.join(BASE_DIR, img_info["rel_path"])
                 if not is_valid_image(full_img_path):
                     skipped_count += 1
                     continue
-                matched_image_url = img_info["full_url"]
+                # ✅ Database mein sirf filename save hoga
+                matched_image = img_info["filename"]
             else:
                 skipped_count += 1
                 continue
@@ -222,8 +223,8 @@ try:
             INSERT INTO products (name, brand, category, price, stock, image, description)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
-            values = (product_name, brand, category, price, stock, matched_image_url, desc)
-            
+            values = (product_name, brand, category, price, stock, matched_image, desc)
+
             cursor.execute(sql, values)
             success_count += 1
             sheet_added += 1
@@ -232,7 +233,9 @@ try:
 
     db.commit()
     print("--------------------------------------------------")
-    print(f"🎉 SUCCESS! Total {success_count} valid products full image URLs ke saath import ho gaye. ({skipped_count} skipped)")
+    print(f"🎉 SUCCESS! Total {success_count} products import ho gaye. ({skipped_count} skipped)")
+    print(f"ℹ️  Database mein sirf filenames save hui hain.")
+    print(f"ℹ️  Frontend inhe {FRONTEND_URL}/images/<filename> se load karega.")
 
 except Exception as e:
     db.rollback()
