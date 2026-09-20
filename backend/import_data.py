@@ -33,7 +33,6 @@ if os.path.exists(IMAGE_FOLDER):
             image_map[name_without_ext] = {
                 "rel_path": os.path.join("static", "images", file),
                 "full_url": f"{BACKEND_URL}/static/images/{file}",
-                matched_image = img_info["full_url"]
             }
 
 def is_valid_image(filepath):
