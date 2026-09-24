@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from config import get_db
 
 products = Blueprint("products", __name__)
@@ -84,7 +84,6 @@ def add_to_cart():
 
 
 # ---------------- GET CART ----------------
-
 @products.route("/cart/<int:user_id>", methods=["GET"])
 def get_cart(user_id):
     db = get_db()
@@ -118,7 +117,7 @@ def get_cart(user_id):
 def cart_count(user_id):
     if not user_id:
         return {"count": 0}
-        
+
     db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT SUM(quantity) AS total FROM shopping_cart WHERE user_id=%s", (user_id,))
@@ -128,6 +127,7 @@ def cart_count(user_id):
 
     total_count = int(result["total"]) if result and result["total"] is not None else 0
     return {"count": total_count}
+
 
 # ---------------- INCREASE QUANTITY ----------------
 @products.route("/increase/<int:cart_id>", methods=["PUT"])
@@ -199,25 +199,21 @@ def place_order():
     user_id = data.get("user_id")
     address = data.get("shipping_address")
     payment = data.get("payment_method")
-    payment_details = data.get("payment_details", "")  # Extra card/wallet details
-    product_id = data.get("product_id")  # Direct Buy check (AI Chat se)
+    payment_details = data.get("payment_details", "")
+    product_id = data.get("product_id")
     quantity = data.get("quantity", 1)
 
     if not user_id or not address:
         return {"error": "User ID and shipping address are required"}, 400
 
-    # Payment string formatted to include details (e.g. "Credit Card (Card: **** 1234)")
     full_payment_info = f"{payment} ({payment_details})" if payment_details else payment
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
     try:
-        delivery_fee = 200.0  # 🚚 Fixed PKR 200 Delivery Fee
+        delivery_fee = 200.0
 
-        # =========================================================
-        # CASE 1: DIRECT BUY (AI Chat)
-        # =========================================================
         if product_id:
             cursor.execute("SELECT price FROM products WHERE id=%s", (product_id,))
             product = cursor.fetchone()
@@ -227,7 +223,6 @@ def place_order():
                 db.close()
                 return {"error": "Product not found"}, 404
 
-            # Subtotal + Delivery Charge
             total = (float(product["price"]) * int(quantity)) + delivery_fee
 
             cursor.execute("""
@@ -235,10 +230,6 @@ def place_order():
                 (user_id, total_amount, status, payment_method, shipping_address)
                 VALUES (%s, %s, %s, %s, %s)
             """, (user_id, total, "Pending", full_payment_info, address))
-
-        # =========================================================
-        # CASE 2: REGULAR CART CHECKOUT
-        # =========================================================
         else:
             cursor.execute("""
                 SELECT SUM(products.price * shopping_cart.quantity) AS total
@@ -255,7 +246,7 @@ def place_order():
                 db.close()
                 return {"error": "Your cart is empty!"}, 400
 
-            total = subtotal + delivery_fee  # Subtotal + Delivery Charge
+            total = subtotal + delivery_fee
 
             cursor.execute("""
                 INSERT INTO orders
@@ -476,34 +467,42 @@ def update_order_status(id):
 # ---------------- ADD TO WISHLIST ----------------
 @products.route("/add-to-wishlist", methods=["POST"])
 def add_to_wishlist():
-    data = request.get_json()
+    try:
+        data = request.get_json() or {}
+        user_id = data.get("user_id")
+        product_id = data.get("product_id")
 
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
+        if not user_id or not product_id:
+            return jsonify({"message": "User ID aur Product ID zaroori hain!"}), 400
 
-    cursor.execute(
-        "SELECT * FROM wishlist WHERE user_id=%s AND product_id=%s",
-        (data["user_id"], data["product_id"])
-    )
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
 
-    already = cursor.fetchone()
+        cursor.execute(
+            "SELECT * FROM wishlist WHERE user_id=%s AND product_id=%s",
+            (user_id, product_id)
+        )
+        already = cursor.fetchone()
 
-    if already:
+        if already:
+            cursor.close()
+            db.close()
+            return jsonify({"message": "This Product is already present in wishlist"}), 200
+
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO wishlist (user_id, product_id) VALUES (%s, %s)",
+            (user_id, product_id)
+        )
+        db.commit()
         cursor.close()
         db.close()
-        return {"message": "Product already in wishlist!"}
 
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO wishlist (user_id, product_id) VALUES (%s, %s)",
-        (data["user_id"], data["product_id"])
-    )
+        return jsonify({"message": "Your Product is successfully added in Wishlist! ❤️"}), 200
 
-    db.commit()
-    cursor.close()
-    db.close()
-
-    return {"message": "Product added to wishlist!"}
+    except Exception as e:
+        print("Wishlist Error:", str(e))
+        return jsonify({"message": f"Internal Server Error: {str(e)}"}), 500
 
 
 # ---------------- GET WISHLIST ----------------
@@ -551,34 +550,47 @@ def remove_wishlist(id):
 # ---------------- ADD REVIEW ----------------
 @products.route("/add-review", methods=["POST"])
 def add_review():
-    data = request.get_json()
+    try:
+        data = request.get_json() or {}
 
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
+        user_id = data.get("user_id")
+        product_id = data.get("product_id")
+        rating = data.get("rating")
+        review_text = data.get("review")
 
-    cursor.execute(
-        "SELECT * FROM reviews WHERE user_id=%s AND product_id=%s",
-        (data["user_id"], data["product_id"])
-    )
+        if not user_id or not product_id or not rating or not review_text:
+            return jsonify({"message": "Saari fields zaroori hain!"}), 400
 
-    already = cursor.fetchone()
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
 
-    if already:
+        cursor.execute(
+            "SELECT * FROM reviews WHERE user_id=%s AND product_id=%s",
+            (user_id, product_id)
+        )
+        already = cursor.fetchone()
+
+        if already:
+            cursor.close()
+            db.close()
+            return jsonify({"message": "You have already reviewed this product."}), 200
+
+        write_cursor = db.cursor()
+        write_cursor.execute(
+            "INSERT INTO reviews (user_id, product_id, rating, review) VALUES (%s, %s, %s, %s)",
+            (user_id, product_id, rating, review_text)
+        )
+
+        db.commit()
+        write_cursor.close()
         cursor.close()
         db.close()
-        return {"message": "You have already reviewed this product."}
 
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO reviews (user_id, product_id, rating, review) VALUES (%s, %s, %s, %s)",
-        (data["user_id"], data["product_id"], data["rating"], data["review"])
-    )
+        return jsonify({"message": "Review submitted successfully!"}), 200
 
-    db.commit()
-    cursor.close()
-    db.close()
-
-    return {"message": "Review submitted successfully!"}
+    except Exception as e:
+        print("Add review error:", str(e))
+        return jsonify({"message": f"Server error: {str(e)}"}), 500
 
 
 # ---------------- GET REVIEWS ----------------
@@ -667,7 +679,7 @@ def get_top_reviews():
     cursor = db.cursor(dictionary=True)
 
     sql = """
-        SELECT 
+        SELECT
             r.rating,
             r.review,
             r.created_at,

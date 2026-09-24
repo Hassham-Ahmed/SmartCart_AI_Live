@@ -3,7 +3,9 @@ import os
 import mysql.connector
 from dotenv import load_dotenv
 
+# .env file load karo
 load_dotenv()
+
 
 def get_db():
     return mysql.connector.connect(
@@ -11,8 +13,8 @@ def get_db():
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME"),
-        port=int(os.getenv("DB_PORT", 28028)),
-        use_pure=True,  # <--- Pure Python implementation force karein
+        port=int(os.getenv("DB_PORT", 20480)),
+        use_pure=True,
         ssl_disabled=False,
-        ssl_verify_identity=False
+        ssl_verify_identity=False,
     )

@@ -11,7 +11,15 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "smartcart_secret_key_12345")
-CORS(app)
+
+# FIX: CORS Settings for React Frontend
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "http://localhost:5173"}},
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 app.register_blueprint(auth, url_prefix="/api/auth")
 app.register_blueprint(products, url_prefix="/api/products")
