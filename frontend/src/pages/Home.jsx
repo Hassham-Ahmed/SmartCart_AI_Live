@@ -22,7 +22,8 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
-  useAuth();
+
+  const { user } = useAuth();
   const { refreshCartCount } = useCart();
   const requireLogin = useRequireLogin();
 
@@ -36,18 +37,58 @@ export default function Home() {
   }, []);
 
   const handleAddToCart = (productId) => {
-    requireLogin(async (user) => {
-      const { ok, data } = await productsApi.addToCart({ user_id: user.id, product_id: productId, quantity: 1 });
-      Swal.fire({ toast: true, position: "top-end", icon: ok ? "success" : "error", title: data.message || (ok ? "Added to Cart!" : "Could not add to cart."), showConfirmButton: false, timer: 1500 });
+    requireLogin(async (currentUser) => {
+      const { ok, data } = await productsApi.addToCart({
+        user_id: currentUser.id,
+        product_id: productId,
+        quantity: 1,
+      });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: ok ? "success" : "error",
+        title: data.message || (ok ? "Added to Cart!" : "Could not add to cart."),
+        showConfirmButton: false,
+        timer: 1500,
+      });
       if (ok) refreshCartCount();
     });
   };
 
-  const handleAddToWishlist = (productId) => {
-    requireLogin(async (user) => {
-      const { data } = await productsApi.addToWishlist({ user_id: user.id, product_id: productId });
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: data.message || "Added to Wishlist!", showConfirmButton: false, timer: 1500 });
-    });
+  const handleAddToWishlist = async (productId) => {
+    if (!user) {
+      Swal.fire({
+        icon: "warning",
+        title: "Login Required",
+        text: "Wishlist mein add karne ke liye pehle login karein!",
+      });
+      return;
+    }
+
+    try {
+      const { ok, data } = await productsApi.addToWishlist({
+        user_id: user.id,
+        product_id: Number(productId),
+      });
+
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: ok ? "success" : "info",
+        title: data?.message || "Wishlist update ho gayi!",
+        showConfirmButton: false,
+        timer: 2000,
+      });
+    } catch (error) {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Wishlist add karne mein masla hua.",
+        showConfirmButton: false,
+        timer: 2000,
+      });
+    }
   };
 
   const handleSearchSubmit = (e) => {
@@ -58,7 +99,13 @@ export default function Home() {
   const handleSubscribe = async (e) => {
     e.preventDefault();
     const { ok, data } = await authApi.subscribe(email);
-    Swal.fire({ icon: ok ? "success" : "error", title: ok ? "Subscribed!" : "Failed", text: data.message, timer: ok ? 2000 : undefined, showConfirmButton: !ok });
+    Swal.fire({
+      icon: ok ? "success" : "error",
+      title: ok ? "Subscribed!" : "Failed",
+      text: data.message,
+      timer: ok ? 2000 : undefined,
+      showConfirmButton: !ok,
+    });
     if (ok) setEmail("");
   };
 

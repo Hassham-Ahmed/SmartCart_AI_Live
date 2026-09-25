@@ -3,18 +3,22 @@ import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { productsApi } from "../api/client";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import useRequireLogin from "../hooks/useRequireLogin";
 import { getImageUrl } from "../config";
 
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState({ average_rating: 0, total_reviews: 0 });
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const { refreshCartCount } = useCart();
   const requireLogin = useRequireLogin();
@@ -28,50 +32,125 @@ export default function ProductDetails() {
   }, [id]);
 
   useEffect(() => {
-    productsApi.getProduct(id).then(({ ok, data }) => ok && setProduct(data));
+    if (!id) return;
+    setLoading(true);
+
+    productsApi.getProducts()
+      .then(({ ok, data }) => {
+        if (ok && Array.isArray(data)) {
+          const found = data.find((p) => String(p.id) === String(id));
+          setProduct(found || null);
+        } else {
+          setProduct(null);
+        }
+      })
+      .catch((err) => {
+        console.error("Product fetch error:", err);
+        setProduct(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
     loadReviews();
     loadRating();
     setQuantity(1);
   }, [id, loadReviews, loadRating]);
 
   const handleAddToCart = (redirectToCheckout = false) => {
-    requireLogin(async (user) => {
-      const { ok, data } = await productsApi.addToCart({ user_id: user.id, product_id: Number(id), quantity });
+    requireLogin(async (currentUser) => {
+      const { ok, data } = await productsApi.addToCart({
+        user_id: currentUser.id,
+        product_id: Number(id),
+        quantity
+      });
       if (ok) {
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: data.message || "Added to Cart!", showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: data?.message || "Added to Cart!", showConfirmButton: false, timer: 1500 });
         refreshCartCount();
         if (redirectToCheckout) navigate("/checkout");
       } else {
-        Swal.fire("Failed", data.message || "Could not add to cart.", "error");
+        Swal.fire("Failed", data?.message || "Could not add to cart.", "error");
       }
     });
   };
 
   const handleAddToWishlist = () => {
-    requireLogin(async (user) => {
-      const { data } = await productsApi.addToWishlist({ user_id: user.id, product_id: Number(id) });
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: data.message || "Added to Wishlist!", showConfirmButton: false, timer: 1500 });
+    requireLogin(async (currentUser) => {
+      const { data } = await productsApi.addToWishlist({
+        user_id: currentUser.id,
+        product_id: Number(id)
+      });
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: data?.message || "Added to Wishlist!", showConfirmButton: false, timer: 1500 });
     });
   };
 
-  const handleSubmitReview = (e) => {
+  // ✅ FIXED: Proper error handling
+  const handleSubmitReview = async (e) => {
     e.preventDefault();
+
+    if (!user) {
+      Swal.fire({
+        title: "Login Required",
+        text: "Review submit karne ke liye pehle login karein.",
+        icon: "warning",
+      }).then(() => navigate("/login"));
+      return;
+    }
+
     if (!reviewText.trim()) {
       Swal.fire("Required", "Please write a review before submitting.", "warning");
       return;
     }
-    requireLogin(async (user) => {
-      const { data } = await productsApi.addReview({ user_id: user.id, product_id: Number(id), rating: reviewRating, review: reviewText.trim() });
-      Swal.fire({ title: "Thank You!", text: data.message || "Review submitted successfully.", icon: "success", timer: 1500, showConfirmButton: false });
-      setReviewText("");
-      setReviewRating(5);
-      loadReviews();
-      loadRating();
-    });
+
+    setSubmittingReview(true);
+
+    try {
+      const { ok, data } = await productsApi.addReview({
+        user_id: user.id,
+        product_id: Number(id),
+        rating: reviewRating,
+        review: reviewText.trim()
+      });
+
+      console.log("Review response:", ok, data);
+
+      // ✅ FIX: Dono success aur duplicate case handle karo
+      if (ok) {
+        Swal.fire({
+          title: "Thank You!",
+          text: data?.message || "Review submitted successfully.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false
+        });
+        setReviewText("");
+        setReviewRating(5);
+        loadReviews();
+        loadRating();
+      } else {
+        Swal.fire("Notice", data?.message || "Review submit nahi ho saka.", "info");
+      }
+    } catch (err) {
+      console.error("Submit review error:", err);
+      Swal.fire("Error", "Server error, dubara koshish karein.", "error");
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
+  if (loading) {
+    return <p className="text-center text-gray-400 py-24">Loading product details...</p>;
+  }
+
   if (!product) {
-    return <p className="text-center text-gray-400 py-24">Loading product...</p>;
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-24 text-center">
+        <p className="text-gray-500 mb-4 text-xl">Product details load nahi ho sakiin ya yeh item mojood nahi hai.</p>
+        <button onClick={() => navigate(-1)} className="btn-primary px-6 py-2 rounded-lg">
+          ← Go Back
+        </button>
+      </div>
+    );
   }
 
   const inStock = product.stock === undefined || product.stock > 0;
@@ -135,7 +214,7 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Reviews */}
+      {/* Reviews Section */}
       <div className="card p-6 md:p-10 mt-8">
         <div className="flex items-center justify-between mb-6 pb-3 border-b">
           <h3 className="text-xl font-bold flex items-center gap-2">⭐ Product Reviews</h3>
@@ -167,7 +246,13 @@ export default function ProductDetails() {
             />
           </div>
           <div className="text-right">
-            <button type="submit" className="btn-primary px-5">Submit Review</button>
+            <button
+              type="submit"
+              disabled={submittingReview}
+              className="btn-primary px-5 disabled:opacity-50"
+            >
+              {submittingReview ? "Submitting..." : "Submit Review"}
+            </button>
           </div>
         </form>
 
