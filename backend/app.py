@@ -1,5 +1,5 @@
 import os
-from flask import Flask, send_from_directory, render_template
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -12,13 +12,14 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "smartcart_secret_key_12345")
 
-# FIX: CORS Settings for React Frontend
+# ✅ CORS: Saare Vercel preview URLs aur localhost allow karo
 CORS(
     app,
-    resources={r"/api/*": {"origins": "http://localhost:5173"}},
-    supports_credentials=True,
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    resources={r"/api/*": {"origins": "*"}},
+    supports_credentials=False,
+    allow_headers=["Content-Type", "Authorization", "X-User-Id"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    expose_headers=["Content-Type"],
 )
 
 app.register_blueprint(auth, url_prefix="/api/auth")
@@ -36,10 +37,9 @@ def test():
     return {"message": "Backend Connected Successfully!", "status": "success"}
 
 
-@app.route('/static/images/<path:filename>')
+@app.route("/static/images/<path:filename>")
 def serve_images(filename):
-    """Static images ko serve karo. Vercel par bhi ye route chalega."""
-    images_dir = os.path.join(app.root_path, 'static', 'images')
+    images_dir = os.path.join(app.root_path, "static", "images")
     return send_from_directory(images_dir, filename)
 
 
