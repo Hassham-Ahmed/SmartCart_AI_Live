@@ -14,13 +14,18 @@ from routes.products import products  # noqa: E402
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB request cap (uploads included)
 
-# CORS: auth is now a bearer token (not cookies), so allowing any origin no
-# longer lets other sites act as the user. Restrict further by setting
-# CORS_ORIGINS="https://your-frontend.vercel.app,http://localhost:5173".
-_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+# CORS allowlist: the production frontend + local Vite dev server.
+# Extra origins (e.g. a Vercel preview URL) can be added without a code change:
+#   CORS_ORIGINS="https://my-preview.vercel.app,https://another.example"
+FRONTEND_ORIGIN = "https://smart-cart-ai-frontend-live-w24x.vercel.app"
+DEFAULT_ORIGINS = [FRONTEND_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"]
+# Browsers send Origin without a trailing slash, so normalise configured values.
+# "*" is ignored on purpose so a leftover CORS_ORIGINS=* can't silently re-open the API to every site.
+_extra = [o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip() and o.strip() != "*"]
+_origins = list(dict.fromkeys(DEFAULT_ORIGINS + _extra))
 CORS(
     app,
-    resources={r"/api/*": {"origins": _origins if _origins != ["*"] else "*"}},
+    resources={r"/api/*": {"origins": _origins}},
     supports_credentials=False,
     allow_headers=["Content-Type", "Authorization", "X-Session-Id"],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
