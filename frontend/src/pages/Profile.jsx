@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-import { authApi } from "../api/client";
+import { authApi, getToken } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE_URL } from "../config";
+import useDocumentTitle from "../hooks/useDocumentTitle";
+
+const AVATAR_FALLBACK =
+  "data:image/svg+xml;charset=utf-8," +
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" fill="#d6e6ff"/><circle cx="64" cy="50" r="22" fill="#4a8bff"/><path d="M24 112c6-22 22-32 40-32s34 10 40 32" fill="#4a8bff"/></svg>');
 
 export default function Profile() {
-  const { user } = useAuth();
+  useDocumentTitle("My Profile");
+  const { user, login } = useAuth();
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", city: "", address: "" });
   const [passwordForm, setPasswordForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
@@ -13,7 +20,7 @@ export default function Profile() {
   const [changingPassword, setChangingPassword] = useState(false);
   
   // Profile Picture States
-  const [imagePreview, setImagePreview] = useState("https://via.placeholder.com/150");
+  const [imagePreview, setImagePreview] = useState(AVATAR_FALLBACK);
   const [selectedFile, setSelectedFile] = useState(null);
 
   const loadProfile = useCallback(() => {
@@ -28,8 +35,9 @@ export default function Profile() {
           city: data.city || "",
           address: data.address || "",
         });
-        if (data.image) {
-          setImagePreview(data.image.startsWith("http") ? data.image : `http://localhost:5000/${data.image}`);
+        // BUGFIX: the API returns `profile_image` (not `image`), and the old code hard-coded localhost:5000
+        if (data.profile_image) {
+          setImagePreview(data.profile_image.startsWith("http") ? data.profile_image : `${API_BASE_URL}/${data.profile_image}`);
         }
       }
     });
@@ -53,25 +61,32 @@ export default function Profile() {
 
   const handleSaveProfile = async () => {
     setSaving(true);
-    
-    // Agar Backend Multipart/FormData accept karta hai photo save ke liye
-    const formData = new FormData();
-    formData.append("id", user.id);
-    Object.keys(form).forEach((key) => formData.append(key, form[key]));
-    if (selectedFile) {
-      formData.append("image", selectedFile);
+    // BUGFIX: a FormData object was being JSON.stringify'd ("{}") whenever a photo was picked,
+    // so profile edits were silently lost. Fields now go as JSON; the photo uploads separately.
+    const { ok, data } = await authApi.updateProfile(form);
+    let photoMsg = "";
+    if (ok && selectedFile) {
+      const up = await authApi.uploadProfileImage(selectedFile);
+      photoMsg = up.ok ? "" : ` (photo: ${up.data.message || "upload failed"})`;
+      setSelectedFile(null);
     }
-
-    // Direct JSON fallback agar backend simple JSON input leta hai:
-    const payload = selectedFile ? formData : { id: user.id, ...form };
-
-    const { data } = await authApi.updateProfile(payload);
     setSaving(false);
-    Swal.fire({ title: "Updated!", text: data.message || "Profile updated successfully.", icon: "success" });
+    if (ok) {
+      login({ ...user, full_name: form.full_name, email: form.email }, getToken());
+    }
+    Swal.fire({
+      title: ok ? "Updated!" : "Failed",
+      text: (data.message || (ok ? "Profile updated successfully." : "Could not update profile.")) + photoMsg,
+      icon: ok ? "success" : "error",
+    });
     loadProfile();
   };
 
   const handleChangePassword = async () => {
+    if (passwordForm.new_password.length < 6) {
+      Swal.fire({ title: "Too short", text: "New password must be at least 6 characters.", icon: "warning" });
+      return;
+    }
     if (passwordForm.new_password !== passwordForm.confirm_password) {
       Swal.fire({ title: "Mismatch!", text: "New Password and Confirm Password do not match.", icon: "error" });
       return;
@@ -79,7 +94,6 @@ export default function Profile() {
 
     setChangingPassword(true);
     const { ok, data } = await authApi.changePassword({
-      id: user.id,
       current_password: passwordForm.current_password,
       new_password: passwordForm.new_password,
     });
@@ -101,13 +115,14 @@ export default function Profile() {
                 src={imagePreview}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border-4 border-primary-500 shadow-md"
-                onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
+                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = AVATAR_FALLBACK; }}
               />
-              <label 
-                htmlFor="profile-upload" 
-                className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              <label
+                htmlFor="profile-upload"
+                aria-label="Change profile photo"
+                className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity cursor-pointer"
               >
-                <i className="fa-solid fa-camera text-xl mb-1" />
+                <span className="text-xl mb-1" aria-hidden="true">📷</span>
                 <span className="text-xs font-semibold">Change</span>
               </label>
               <input 
@@ -115,12 +130,12 @@ export default function Profile() {
                 type="file" 
                 accept="image/*" 
                 onChange={handleImageChange} 
-                className="hidden" 
+                className="sr-only" 
               />
             </div>
 
             <h4 className="font-bold text-lg mb-1">{profile?.full_name || "Loading..."}</h4>
-            <p className="text-gray-400 text-sm mb-4">{profile?.email || "loading@example.com"}</p>
+            <p className="text-gray-400 text-sm mb-4">{profile?.email || ""}</p>
 
             <div className="flex flex-col gap-2">
               <Link to="/wishlist" className="btn-outline-primary">❤️ Wishlist</Link>
@@ -135,24 +150,24 @@ export default function Profile() {
             <hr className="mb-4" />
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="form-label">Full Name</label>
-                <input type="text" value={form.full_name} onChange={update("full_name")} className="form-input" />
+                <label htmlFor="profile-full-name" className="form-label">Full Name</label>
+                <input id="profile-full-name" type="text" value={form.full_name} onChange={update("full_name")} className="form-input" />
               </div>
               <div>
-                <label className="form-label">Email Address</label>
-                <input type="email" value={form.email} onChange={update("email")} className="form-input" />
+                <label htmlFor="profile-email-address" className="form-label">Email Address</label>
+                <input id="profile-email-address" type="email" value={form.email} onChange={update("email")} className="form-input" />
               </div>
               <div>
-                <label className="form-label">Phone Number</label>
-                <input type="text" value={form.phone} onChange={update("phone")} className="form-input" />
+                <label htmlFor="profile-phone-number" className="form-label">Phone Number</label>
+                <input id="profile-phone-number" type="text" value={form.phone} onChange={update("phone")} className="form-input" />
               </div>
               <div>
-                <label className="form-label">City</label>
-                <input type="text" value={form.city} onChange={update("city")} className="form-input" />
+                <label htmlFor="profile-city" className="form-label">City</label>
+                <input id="profile-city" type="text" value={form.city} onChange={update("city")} className="form-input" />
               </div>
               <div className="sm:col-span-2">
-                <label className="form-label">Shipping Address</label>
-                <textarea value={form.address} onChange={update("address")} rows={3} className="form-input" />
+                <label htmlFor="profile-shipping-address" className="form-label">Shipping Address</label>
+                <textarea id="profile-shipping-address" value={form.address} onChange={update("address")} rows={3} className="form-input" />
               </div>
             </div>
             <div className="text-right mt-4">
@@ -167,17 +182,17 @@ export default function Profile() {
             <hr className="mb-4" />
             <div className="grid gap-4">
               <div>
-                <label className="form-label">Current Password</label>
-                <input type="password" value={passwordForm.current_password} onChange={updatePassword("current_password")} className="form-input" />
+                <label htmlFor="profile-current-password" className="form-label">Current Password</label>
+                <input id="profile-current-password" type="password" value={passwordForm.current_password} onChange={updatePassword("current_password")} className="form-input" />
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">New Password</label>
-                  <input type="password" value={passwordForm.new_password} onChange={updatePassword("new_password")} className="form-input" />
+                  <label htmlFor="profile-new-password" className="form-label">New Password</label>
+                  <input id="profile-new-password" type="password" value={passwordForm.new_password} onChange={updatePassword("new_password")} className="form-input" />
                 </div>
                 <div>
-                  <label className="form-label">Confirm New Password</label>
-                  <input type="password" value={passwordForm.confirm_password} onChange={updatePassword("confirm_password")} className="form-input" />
+                  <label htmlFor="profile-confirm-new-password" className="form-label">Confirm New Password</label>
+                  <input id="profile-confirm-new-password" type="password" value={passwordForm.confirm_password} onChange={updatePassword("confirm_password")} className="form-input" />
                 </div>
               </div>
             </div>

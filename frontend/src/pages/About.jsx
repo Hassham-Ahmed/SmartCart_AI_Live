@@ -1,4 +1,4 @@
-const techStack = ["React", "Tailwind CSS", "JavaScript", "Flask", "MySQL", "AI Chatbot", "Python", "Gemini API"];
+const techStack = ["React", "Tailwind CSS", "JavaScript", "Flask", "MySQL", "Python", "Gemini API", "Vector Embeddings", "RAG", "Function Calling"];
 
 const features = [
   { icon: "🤖", title: "AI Recommendations", text: "Smart algorithms analyze behavior to offer contextual product picks." },
@@ -28,7 +28,11 @@ export default function About() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-10 items-center mb-16">
-        <img src="https://picsum.photos/600/400" alt="About SmartCart AI" className="rounded-2xl shadow-lg w-full" />
+        {/* Was a random picsum.photos stock image (different on every load, unrelated to the store) */}
+        <div className="rounded-2xl shadow-lg w-full aspect-[3/2] bg-gradient-to-br from-primary-900 via-primary-700 to-primary-500 text-white flex flex-col items-center justify-center gap-3 p-8 text-center" aria-hidden="true">
+          <span className="text-6xl">🛒🤖</span>
+          <span className="text-lg font-semibold">Semantic search · RAG assistant · Personalised picks</span>
+        </div>
         <div>
           <h3 className="text-xl font-bold mb-3">Who We Are</h3>
           <p className="text-gray-600 text-lg leading-relaxed">

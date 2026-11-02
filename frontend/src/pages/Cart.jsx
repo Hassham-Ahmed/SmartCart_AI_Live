@@ -3,9 +3,12 @@ import { Link } from "react-router-dom";
 import { productsApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { getImageUrl } from "../config";
+import Swal from "sweetalert2";
+import { getImageUrl, PLACEHOLDER_IMAGE } from "../config";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 export default function Cart() {
+  useDocumentTitle("Your Cart");
   const { user } = useAuth();
   const { refreshCartCount } = useCart();
   const [items, setItems] = useState([]);
@@ -25,7 +28,8 @@ export default function Cart() {
   }, [loadCart]);
 
   const mutate = async (fn) => {
-    await fn();
+    const { ok, data } = await fn();
+    if (!ok) Swal.fire({ toast: true, position: "top-end", icon: "info", title: data.message || "Could not update cart.", showConfirmButton: false, timer: 1800 });
     loadCart();
     refreshCartCount();
   };
@@ -34,7 +38,7 @@ export default function Cart() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <h2 className="text-2xl font-bold mb-6">🛒 Your Shopping Cart</h2>
+      <h1 className="text-2xl font-bold mb-6">🛒 Your Shopping Cart</h1>
 
       <div className="card overflow-hidden mb-6">
         <div className="overflow-x-auto">
@@ -51,9 +55,9 @@ export default function Cart() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400">Loading cart...</td></tr>
+                <tr><td colSpan={6} className="text-center py-10 text-gray-500">Loading cart...</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400">Your cart is empty.</td></tr>
+                <tr><td colSpan={6} className="text-center py-10 text-gray-500">Your cart is empty. <Link to="/products" className="text-primary-600 font-semibold hover:underline">Start shopping →</Link></td></tr>
               ) : (
                 items.map((item) => (
                   <tr key={item.id}>
@@ -63,8 +67,12 @@ export default function Cart() {
                         src={getImageUrl(item.image)}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg"
+                        width="64"
+                        height="64"
+                        loading="lazy"
                         onError={(e) => {
-                          e.target.src = "https://placehold.co/600x600/e5e7eb/9ca3af?text=No+Image";
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = PLACEHOLDER_IMAGE;
                         }}
                       />
                     </td>
@@ -74,11 +82,13 @@ export default function Cart() {
                         <button
                           onClick={() => mutate(() => productsApi.decreaseQuantity(item.id))}
                           className="btn-danger px-3 py-1 text-xs"
-                        >-</button>
+                          aria-label={`Decrease quantity of ${item.name}`}
+                        >−</button>
                         <span>{item.quantity}</span>
                         <button
                           onClick={() => mutate(() => productsApi.increaseQuantity(item.id))}
                           className="btn-success px-3 py-1 text-xs"
+                          aria-label={`Increase quantity of ${item.name}`}
                         >+</button>
                       </div>
                     </td>
@@ -102,7 +112,11 @@ export default function Cart() {
           <span className="text-gray-500">Subtotal:</span>
           <h3 className="text-2xl font-bold text-primary-600">Rs. {total.toLocaleString()}</h3>
         </div>
-        <Link to="/checkout" className="btn-success px-6 py-3">Proceed to Checkout →</Link>
+        {items.length > 0 ? (
+          <Link to="/checkout" className="btn-success btn-3d px-6 py-3">Proceed to Checkout →</Link>
+        ) : (
+          <Link to="/products" className="btn-primary px-6 py-3">Browse Products</Link>
+        )}
       </div>
     </div>
   );

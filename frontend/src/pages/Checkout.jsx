@@ -4,11 +4,13 @@ import Swal from "sweetalert2";
 import { productsApi } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const PROVINCES = ["Sindh", "Punjab", "KPK", "Balochistan", "Islamabad"];
 const DELIVERY_FEE = 200;
 
 export default function Checkout() {
+  useDocumentTitle("Checkout");
   const { user } = useAuth();
   const { refreshCartCount } = useCart();
   const navigate = useNavigate();
@@ -39,39 +41,33 @@ export default function Checkout() {
       Swal.fire({ title: "Details Required", text: "Please fill phone number and delivery address.", icon: "warning" });
       return;
     }
-
-    // Construct final shipping address string
-    const fullShippingAddress = `${address.trim()}, ${city}, ${province} (Phone: ${phone})`;
-    
-    // Construct payment string with payload details if card/wallet selected
-    let finalPaymentMethod = payment;
-    if (payment === "Credit / Debit Card" && cardNumber) {
-      finalPaymentMethod = `Credit / Debit Card (Ending **** ${cardNumber.slice(-4)})`;
-    } else if (payment === "Easypaisa / JazzCash" && walletNumber) {
-      finalPaymentMethod = `Easypaisa / JazzCash (${walletNumber})`;
+    if (!/^\+?[\d\s-]{10,15}$/.test(phone.trim())) {
+      Swal.fire({ title: "Check your phone number", text: "Please enter a valid phone number, e.g. 0300 1234567.", icon: "warning" });
+      return;
     }
+    const detail = payment === "Credit / Debit Card" ? cardNumber : payment === "Easypaisa / JazzCash" ? walletNumber : "";
+    const digits = detail.replace(/\D/g, "");
+    if (payment !== "Cash on Delivery" && digits.length < 4) {
+      Swal.fire({ title: "Payment details", text: "Please enter your card / wallet number.", icon: "warning" });
+      return;
+    }
+
+    const fullShippingAddress = `${fullName.trim() ? fullName.trim() + ", " : ""}${address.trim()}, ${city.trim()}, ${province} (Phone: ${phone.trim()})`;
 
     setPlacing(true);
     const { ok, data } = await productsApi.placeOrder({
-      user_id: user.id,
       shipping_address: fullShippingAddress,
-      payment_method: finalPaymentMethod,
+      payment_method: payment,
+      // Security: only the last 4 digits are sent; the server stores "ending 1234".
+      payment_details: digits.slice(-4),
     });
     setPlacing(false);
 
     if (ok) {
-      Swal.fire({
-        title: "Order Placed!",
-        text: data.message || "Your order has been placed successfully.",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      }).then(() => {
-        refreshCartCount();
-        navigate("/order-success");
-      });
+      refreshCartCount();
+      navigate("/order-success", { replace: true, state: { orderId: data.order_id, total: data.total_amount } });
     } else {
-      Swal.fire("Order Failed", data.message || "Something went wrong.", "error");
+      Swal.fire("Order Failed", data.message || data.error || "Something went wrong.", "error");
     }
   };
 
@@ -83,8 +79,8 @@ export default function Checkout() {
             <h3 className="text-xl font-bold mb-5">🚚 Shipping Information</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="form-label">Full Name</label>
-                <input
+                <label htmlFor="checkout-full-name" className="form-label">Full Name</label>
+                <input id="checkout-full-name"
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -93,13 +89,14 @@ export default function Checkout() {
                 />
               </div>
               <div>
-                <label className="form-label">Email</label>
-                <input type="email" defaultValue={user?.email} disabled className="form-input bg-gray-100" />
+                <label htmlFor="checkout-email" className="form-label">Email</label>
+                <input id="checkout-email" type="email" defaultValue={user?.email} disabled className="form-input bg-gray-100" />
               </div>
               <div>
-                <label className="form-label">Phone *</label>
-                <input
-                  type="text"
+                <label htmlFor="checkout-phone" className="form-label">Phone *</label>
+                <input id="checkout-phone"
+                  type="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="form-input"
@@ -107,14 +104,14 @@ export default function Checkout() {
                 />
               </div>
               <div>
-                <label className="form-label">Province</label>
-                <select className="form-input" value={province} onChange={(e) => setProvince(e.target.value)}>
+                <label htmlFor="checkout-province" className="form-label">Province</label>
+                <select id="checkout-province" className="form-input" value={province} onChange={(e) => setProvince(e.target.value)}>
                   {PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="form-label">City</label>
-                <input
+                <label htmlFor="checkout-city" className="form-label">City</label>
+                <input id="checkout-city"
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
@@ -123,8 +120,8 @@ export default function Checkout() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="form-label">Complete Delivery Address *</label>
-                <textarea
+                <label htmlFor="checkout-complete-delivery-address" className="form-label">Complete Delivery Address *</label>
+                <textarea id="checkout-complete-delivery-address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   rows={3}
@@ -177,11 +174,14 @@ export default function Checkout() {
                     <div className="mt-2 text-xs space-y-2">
                       <input
                         type="text"
-                        placeholder="Card Number (16 digits)"
+                        placeholder="Card number (only last 4 digits are saved)"
+                        aria-label="Card number"
+                        inputMode="numeric"
+                        autoComplete="cc-number"
                         value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value)}
+                        onChange={(e) => setCardNumber(e.target.value.replace(/[^\d ]/g, ""))}
                         className="form-input text-xs w-full mt-1"
-                        maxLength={16}
+                        maxLength={19}
                       />
                     </div>
                   )}
@@ -192,8 +192,10 @@ export default function Checkout() {
                       <input
                         type="text"
                         placeholder="Mobile Wallet Number (03xxxxxxxxx)"
+                        aria-label="Wallet mobile number"
+                        inputMode="numeric"
                         value={walletNumber}
-                        onChange={(e) => setWalletNumber(e.target.value)}
+                        onChange={(e) => setWalletNumber(e.target.value.replace(/\D/g, ""))}
                         className="form-input text-xs w-full mt-1"
                         maxLength={11}
                       />
@@ -206,7 +208,7 @@ export default function Checkout() {
             <button onClick={handlePlaceOrder} disabled={placing || items.length === 0} className="btn-success w-full py-3">
               {placing ? "Placing Order..." : "Place Order Now"}
             </button>
-            <small className="text-gray-400 text-center block mt-3">🔒 256-bit SSL Encrypted Payment</small>
+            <small className="text-gray-500 text-center block mt-3">🔒 Secure HTTPS checkout - we never store full card numbers</small>
           </div>
         </div>
       </div>

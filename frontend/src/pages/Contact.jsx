@@ -43,20 +43,20 @@ export default function Contact() {
           <div className="card p-6 h-full">
             <h3 className="text-xl font-bold mb-4">Send Us a Message</h3>
             <div className="mb-4">
-              <label className="form-label">Full Name</label>
-              <input type="text" value={form.full_name} onChange={update("full_name")} className="form-input" placeholder="John Doe" />
+              <label htmlFor="contact-full-name" className="form-label">Full Name</label>
+              <input id="contact-full-name" type="text" value={form.full_name} onChange={update("full_name")} className="form-input" placeholder="John Doe" />
             </div>
             <div className="mb-4">
-              <label className="form-label">Email Address</label>
-              <input type="email" value={form.email} onChange={update("email")} className="form-input" placeholder="name@example.com" />
+              <label htmlFor="contact-email-address" className="form-label">Email Address</label>
+              <input id="contact-email-address" type="email" value={form.email} onChange={update("email")} className="form-input" placeholder="name@example.com" />
             </div>
             <div className="mb-4">
-              <label className="form-label">Subject</label>
-              <input type="text" value={form.subject} onChange={update("subject")} className="form-input" placeholder="Order inquiry / Feedback" />
+              <label htmlFor="contact-subject" className="form-label">Subject</label>
+              <input id="contact-subject" type="text" value={form.subject} onChange={update("subject")} className="form-input" placeholder="Order inquiry / Feedback" />
             </div>
             <div className="mb-5">
-              <label className="form-label">Message</label>
-              <textarea value={form.message} onChange={update("message")} rows={4} className="form-input" placeholder="Type your message here..." />
+              <label htmlFor="contact-message" className="form-label">Message</label>
+              <textarea id="contact-message" value={form.message} onChange={update("message")} rows={4} className="form-input" placeholder="Type your message here..." />
             </div>
             <button onClick={handleSend} disabled={sending} className="btn-primary w-full py-3">
               {sending ? "Sending..." : "Send Message"}

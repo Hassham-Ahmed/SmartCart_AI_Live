@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { productsApi } from "../api/client";
 import { useCart } from "../context/CartContext";
 import useRequireLogin from "../hooks/useRequireLogin";
 import ProductCard from "../components/ProductCard";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const PRICE_RANGES = [
   { value: "", label: "Price Range" },
@@ -15,14 +16,16 @@ const PRICE_RANGES = [
 ];
 
 export default function Products() {
+  useDocumentTitle("Products", "Browse the SmartCart AI catalog: phones, laptops, fashion, home and more.");
   const [searchParams, setSearchParams] = useSearchParams();
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [brand, setBrand] = useState("");
   const [priceRange, setPriceRange] = useState("");
+  const [categoryOptions, setCategoryOptions] = useState([]);
 
-  // Pagination State (30 items per page)
+  // Pagination (32 items per page)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 32;
 
@@ -35,10 +38,18 @@ export default function Products() {
   useEffect(() => {
     setLoading(true);
     productsApi.getProducts({ category, search }).then(({ ok, data }) => {
-      if (ok) setAllProducts(data);
+      if (ok && Array.isArray(data)) setAllProducts(data);
       setLoading(false);
     });
   }, [category, search]);
+
+  // BUGFIX: options used to come from the already-filtered list, so once a category was
+  // picked the dropdown only offered that one category.
+  useEffect(() => {
+    productsApi.getCategories().then(({ ok, data }) => {
+      if (ok && Array.isArray(data)) setCategoryOptions(data.map((c) => c.category));
+    });
+  }, []);
 
   // Reset to page 1 whenever filters change
   useEffect(() => {
@@ -98,17 +109,17 @@ export default function Products() {
   };
 
   const handleAddToCart = (productId) => {
-    requireLogin(async (user) => {
-      const { ok, data } = await productsApi.addToCart({ user_id: user.id, product_id: productId, quantity: 1 });
+    requireLogin(async () => {
+      const { ok, data } = await productsApi.addToCart({ product_id: productId, quantity: 1 });
       Swal.fire({ toast: true, position: "top-end", icon: ok ? "success" : "error", title: data.message || (ok ? "Added to Cart!" : "Could not add to cart."), showConfirmButton: false, timer: 1500 });
       if (ok) refreshCartCount();
     });
   };
 
   const handleAddToWishlist = (productId) => {
-    requireLogin(async (user) => {
-      const { data } = await productsApi.addToWishlist({ user_id: user.id, product_id: productId });
-      Swal.fire({ toast: true, position: "top-end", icon: "success", title: data.message || "Added to Wishlist!", showConfirmButton: false, timer: 1500 });
+    requireLogin(async () => {
+      const { ok, data } = await productsApi.addToWishlist({ product_id: productId });
+      Swal.fire({ toast: true, position: "top-end", icon: ok ? "success" : "error", title: data.message || (ok ? "Added to Wishlist!" : "Could not update wishlist."), showConfirmButton: false, timer: 1500 });
     });
   };
 
@@ -116,7 +127,7 @@ export default function Products() {
     <div className="bg-gray-50 min-h-screen">
       <div className="bg-primary-900 text-white py-8">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-1">🛍️ Explore Our Products</h2>
+          <h1 className="text-2xl font-bold mb-1">🛍️ Explore Our Products</h1>
           <p className="text-white/60 text-sm">Discover high-quality items with AI-powered recommendations.</p>
         </div>
       </div>
@@ -138,21 +149,21 @@ export default function Products() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="form-label">Category</label>
-              <select
+              <label htmlFor="products-category" className="form-label">Category</label>
+              <select id="products-category"
                 value={category}
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 className="form-input"
               >
                 <option value="">All Categories</option>
-                {[...new Set(allProducts.map((p) => p.category))].sort().map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="form-label">Brand</label>
-              <select value={brand} onChange={(e) => setBrand(e.target.value)} className="form-input">
+              <label htmlFor="products-brand" className="form-label">Brand</label>
+              <select id="products-brand" value={brand} onChange={(e) => setBrand(e.target.value)} className="form-input">
                 <option value="">All Brands</option>
                 {brands.map((b) => (
                   <option key={b} value={b}>{b}</option>
@@ -160,8 +171,8 @@ export default function Products() {
               </select>
             </div>
             <div>
-              <label className="form-label">Price Range</label>
-              <select value={priceRange} onChange={(e) => setPriceRange(e.target.value)} className="form-input">
+              <label htmlFor="products-price-range" className="form-label">Price Range</label>
+              <select id="products-price-range" value={priceRange} onChange={(e) => setPriceRange(e.target.value)} className="form-input">
                 {PRICE_RANGES.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
@@ -171,9 +182,12 @@ export default function Products() {
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-400 py-16">Loading products...</p>
+          <p className="text-center text-gray-500 py-16" role="status">Loading products...</p>
         ) : products.length === 0 ? (
-          <p className="text-center text-gray-400 py-16">No products found.</p>
+          <div className="text-center text-gray-500 py-16">
+            <p className="mb-3">No products match these filters.</p>
+            {search && <Link to={`/ai-chat?q=${encodeURIComponent(search)}`} className="btn-outline-primary">🤖 Ask the AI to find "{search}"</Link>}
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-8">
