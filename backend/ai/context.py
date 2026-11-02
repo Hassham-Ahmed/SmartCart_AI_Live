@@ -39,6 +39,7 @@ EMPTY_CONTEXT = {
     "entities": {"product": None, "budget": None, "quantity": None, "order_id": None},
     "last_5_turns": [],
     "tone": "neutral",
+    "language": "english",       # english | roman_urdu (reply in the same language)
     "last_products": [],        # ids shown in the previous answer ("add the second one")
     "pending_checkout": None,   # two-phase confirmation for orders
     "profile_summary": None,
@@ -52,12 +53,26 @@ FEATURE_WORDS = [
     "formal", "sports", "running", "kids", "organic", "leather", "cotton", "smart", "storage", "ram",
 ]
 
+# English + Roman Urdu phrasings (e.g. "mera order kahan hai", "cart mein daal do").
 INTENT_RULES = [
-    ("track", r"\b(track|tracking|where(?:'s| is) my|order status|status of (?:my )?order|deliver(?:y|ed)\b.*order|order\s*#?\d+)"),
-    ("support", r"\b(refund|return|exchange|complain|complaint|broken|damaged|warranty|cancel(?:\s+my)?\s+order|contact|human|agent|support)\b"),
-    ("compare", r"\b(compare|comparison|vs\.?|versus|difference between|which is better|better than)\b"),
-    ("buy", r"\b(buy|purchase|order (?:it|this|that|now)|place (?:the |my )?order|checkout|check out|add (?:it |this |that |them )?to (?:my )?cart|add\b.*\bcart|remove\b.*\bcart|my cart|view cart|wishlist)\b"),
+    ("track", r"\b(track|tracking|where(?:'s| is) my|order status|status of (?:my )?order|deliver(?:y|ed)\b.*order|order\s*#?\d+"
+              r"|order\b.*\b(?:kahan|kahaan|kidhar|kab tak|kab (?:aye|aaye|ayega|aayega|milega|pohanchega))"
+              r"|(?:mera|meri|mere)\s+(?:order|parcel)\b.*\b(?:status|kya hua|kahan|kahaan))"),
+    ("support", r"\b(refund|return|exchange|complain|complaint|broken|damaged|warranty|cancel(?:\s+my)?\s+order|contact|human|agent|support"
+                r"|wapas|wapis|paise wapas|shikayat|kharab|toota|tuta|order cancel)\b"),
+    ("compare", r"\b(compare|comparison|vs\.?|versus|difference between|which is better|better than"
+                r"|farq|fark|muqabla|kaun sa behtar|kon sa behtar|kaunsa behtar|konsa behtar|zyada behtar)\b"),
+    ("buy", r"\b(buy|purchase|order (?:it|this|that|now)|place (?:the |my )?order|checkout|check out|add (?:it |this |that |them )?to (?:my )?cart|add\b.*\bcart|remove\b.*\bcart|my cart|view cart|wishlist"
+            r"|cart\s+(?:mein|me|main)\b|khareed|khareedna|khareed lo|le lo|order (?:kar|karo|kardo|kar do)|checkout karo|mera cart)\b"),
 ]
+
+# Common Roman Urdu function words - if a message has several, the shopper is writing Roman Urdu.
+ROMAN_URDU_MARKERS = set(
+    "mujhe mujh mera meri mere hum humein aap ap tum kya kia kyun kaise kesa kaisa kahan kahaan kab kitna kitne kitni "
+    "chahiye chahye chaiye hai hain tha thi ho hoga hogi karo kardo kar do daal dal daalo dikhao dikhaao batao bataen "
+    "wala wali wale sasta sasti saste mehnga acha acchi achi accha bohat bahut zyada kam se mein main ka ki ke ko "
+    "nahi nahin bhai yaar jee ji abhi dono sab koi kuch aur lekin magar".split()
+)
 
 _CASUAL = re.compile(r"\b(hey|yo|bro|bhai|yaar|dude|lol|pls|plz|thx|thanks!|gonna|wanna|u|ur|k|ok+)\b|[😀-🙏🔥👍❤]", re.I)
 _FORMAL = re.compile(r"\b(kindly|could you please|would you|dear|regards|i would like|may i)\b", re.I)
@@ -67,7 +82,7 @@ _FORMAL = re.compile(r"\b(kindly|could you please|would you|dear|regards|i would
 def parse_amount(num, unit):
     value = float(num.replace(",", ""))
     unit = (unit or "").lower()
-    if unit in ("k", "thousand"):
+    if unit in ("k", "thousand", "hazar", "hazaar", "hzar"):
         value *= 1_000
     elif unit in ("lakh", "lac", "lacs", "lakhs", "l"):
         value *= 100_000
@@ -76,7 +91,7 @@ def parse_amount(num, unit):
     return value
 
 
-_AMOUNT = r"(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|lakh|lakhs|lac|lacs|l|m|mn|million)?\b"
+_AMOUNT = r"(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|hazar|hazaar|hzar|lakh|lakhs|lac|lacs|l|m|mn|million)?\b"
 
 
 def extract_budget(text):
@@ -85,6 +100,19 @@ def extract_budget(text):
     if m:
         lo, hi = parse_amount(m.group(1), m.group(2)), parse_amount(m.group(3), m.group(4))
         return {"min": min(lo, hi), "max": max(lo, hi)}
+    # Roman Urdu range: "30 se 50 hazar ke beech" / "30k se 50k tak" (unit may only follow the 2nd number)
+    m = re.search(_AMOUNT + r"\s+se\s+" + _AMOUNT + r"\s*(?:ke|k)?\s*(?:beech|darmiyan|tak)\b", t)
+    if m:
+        hi = parse_amount(m.group(3), m.group(4))
+        lo = parse_amount(m.group(1), m.group(2) or m.group(4))
+        return {"min": min(lo, hi), "max": max(lo, hi)}
+    # Roman Urdu postfix: "50k se kam", "1 lakh tak", "50 hazar ke andar", "60k ke neeche"
+    m = re.search(_AMOUNT + r"\s*(?:se kam|se kum|tak|ke andar|k andar|ke neeche|ke niche|se neeche|ki range)\b", t)
+    if m:
+        return {"max": parse_amount(m.group(1), m.group(2))}
+    m = re.search(_AMOUNT + r"\s*(?:se (?:zyada|ziada|upar|oopar))\b", t)
+    if m:
+        return {"min": parse_amount(m.group(1), m.group(2))}
     m = re.search(r"(?:under|below|less than|upto|up to|within|max(?:imum)?|budget(?: is| of)?|not more than)\s*(?:of\s*)?" + _AMOUNT, t)
     if m:
         return {"max": parse_amount(m.group(1), m.group(2))}
@@ -115,6 +143,15 @@ def detect_intent(text):
         if re.search(pattern, t):
             return intent
     return "browse"
+
+
+def detect_language(text):
+    """'roman_urdu' when >=2 Roman Urdu marker words (or >=30% of words), else 'english'."""
+    words = re.findall(r"[a-z]+", text.lower())
+    if not words:
+        return "english"
+    hits = sum(w in ROMAN_URDU_MARKERS for w in words)
+    return "roman_urdu" if hits >= 2 or hits / len(words) >= 0.3 else "english"
 
 
 def detect_tone(text):
@@ -152,6 +189,7 @@ def update_from_message(ctx, message, catalog=None):
     ctx["current_intent"] = intent
     ctx["current_step"] = step_for(intent, text)
     ctx["tone"] = detect_tone(text)
+    ctx["language"] = detect_language(text)
 
     budget = extract_budget(text)
     ctx["entities"]["budget"] = budget  # per-turn: only a budget stated *now* is a hard filter
@@ -198,7 +236,9 @@ def add_turn(ctx, role, text):
 def retrieval_query(ctx, message):
     """Make follow-ups ('any cheaper?', 'what about samsung') retrievable."""
     words = re.findall(r"[a-zA-Z]+", message)
-    vague = len(words) <= 5 or re.search(r"\b(it|this|that|those|them|these|cheaper|another|more|else|similar|other)\b", message.lower())
+    vague = len(words) <= 5 or re.search(
+        r"\b(it|this|that|those|them|these|cheaper|another|more|else|similar|other"
+        r"|yeh|ye|woh|wo|isse|is se|us se|sasta|saste|sasti|dusra|doosra|aur|jaisa|jaisi)\b", message.lower())
     prev = [s for s in ctx["history"]["searches"] if s != message]
     if vague and prev:
         return f"{prev[-1]} {message}"

@@ -55,8 +55,49 @@ Re-run `embed_products` after bulk catalog changes. When an admin adds or edits 
 ## 3. Environment variables (Vercel → Project → Settings → Environment Variables)
 
 Backend: see `backend/.env.example`. **Required:** `DB_*`, `SECRET_KEY` (new), `GEMINI_API_KEY`.
-Optional: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CORS_ORIGINS`, `GEMINI_CHAT_MODEL`, `GEMINI_EMBED_MODEL`, `GEMINI_EMBED_DIMS`, `AI_MAX_OUTPUT_TOKENS`, `AI_RATE_LIMIT_PER_MIN`, `AI_INDEX_TTL`, `AI_MIN_SIMILARITY`.
+Optional: `UPSTASH_REDIS_URL`, `UPSTASH_REDIS_TOKEN` (see §3a), `CORS_ORIGINS` (extra origins only, see §3b), `GEMINI_CHAT_MODEL`, `GEMINI_EMBED_MODEL`, `GEMINI_EMBED_DIMS`, `AI_MAX_OUTPUT_TOKENS`, `AI_RATE_LIMIT_PER_MIN`, `AI_INDEX_TTL`, `AI_MIN_SIMILARITY`.
 Frontend: `VITE_API_URL` (optional, defaults to the deployed backend).
+
+### 3a. Upstash Redis (short-term chat memory, rate limits, caches)
+
+| Vercel env var (backend project) | Value | Where to get it |
+|---|---|---|
+| `UPSTASH_REDIS_URL` | `https://<your-db>.upstash.io` | [console.upstash.com](https://console.upstash.com) → **Create Database** (Redis; pick the region closest to your Vercel functions, e.g. US East for Vercel's default `iad1`) → open the database → **REST API** section → copy **`UPSTASH_REDIS_REST_URL`** |
+| `UPSTASH_REDIS_TOKEN` | long token string | same **REST API** section → copy **`UPSTASH_REDIS_REST_TOKEN`** (the full-access token, not the read-only one) |
+
+- Use the **REST URL** (`https://…`). The `redis://` / `rediss://` connection string will **not** work. The backend detects that mistake and reports it.
+- The backend also accepts Upstash's own names (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`) and the `KV_REST_API_URL` / `KV_REST_API_TOKEN` pair, so the Vercel Marketplace integration works without renaming. If several are set, the first one found wins, in that order.
+- Env var changes take effect on the **next deployment**, so redeploy the backend after adding them.
+- Without these variables (or if Upstash is down) everything keeps working on the in-memory TTL fallback. Sessions are still persisted in MySQL.
+
+**Verify it is in use:** open `https://smart-cart-ai-live.vercel.app/api/ai/health`:
+
+```json
+{ "kv_backend": "upstash-redis", "redis": "connected", "latency_ms": 12, ... }
+```
+
+| `redis` value | Meaning |
+|---|---|
+| `connected` | Upstash configured and answered `PING`. Redis is being used. |
+| `fallback` | No Upstash env vars. The in-memory store is used. |
+| `misconfigured` | Variables present but unusable. `detail` says why (e.g. a `redis://` URL or a missing token). |
+| `error` | Configured but `PING` failed. Requests transparently use the in-memory fallback. |
+
+You can also watch keys appear in the Upstash **Data Browser** after a chat message: `ctx:<session>` (conversation context) and `rl:<user-or-ip>:<minute>` (rate limiter).
+
+### 3b. Frontend domain, CORS and social metadata
+- **Production frontend:** `https://smart-cart-ai-frontend-live-w24x.vercel.app`
+- **CORS allowlist** (`backend/app.py`): that domain plus `http://localhost:5173` and `http://127.0.0.1:5173` for local dev. Other origins, such as Vercel *preview* deployments, are blocked unless listed in `CORS_ORIGINS` (comma-separated). `*` is ignored on purpose.
+- `index.html`: `og:url`, `og:image` (`/og-image.jpg`, 1200×630, built from real catalog photos) and `twitter:image` are absolute URLs on that domain. `robots.txt` points to `/sitemap.xml`, which lists the main public pages.
+- The unused 65 MB `frontend/public/images` folder was removed. 871 of its 874 files were byte-identical copies of `backend/static/images`, and the 3 unique files were moved there. The site's product images come from the database (Cloudinary or backend `/static/images`), never from that folder.
+
+### 3c. Chat language: English + Roman Urdu
+- The assistant replies in the **same language as the shopper's latest message**: English (default) or **Roman Urdu** (e.g. *"mujhe sasta laptop chahiye"* → Roman Urdu reply). Product names, specs and prices stay exactly as in the catalog.
+- Detection: `ai/context.py::detect_language` (Roman Urdu marker words) passes a `LANGUAGE:` hint to the LLM, and the system prompt tells the model to trust the message itself if they disagree.
+- Rule-based extraction understands Roman Urdu intents (`mera order kahan hai` → track, `cart mein daal do` → buy, `compare karo` / `farq` → compare) and budgets (`50 hazar se kam`, `1 lakh tak`, `30 se 50 hazar ke beech`).
+- Retrieval: Gemini embeddings are multilingual. For the keyword half of the hybrid score, a small Roman Urdu → English dictionary (`ai/vector_store.py::ROMAN_URDU_TERMS`, e.g. *sasta* → budget, *joote* → shoes, *khilone* → toys) expands query words.
+- UI labels, buttons, error messages and the admin panel stay **English only**.
+- Eval: 8 Roman Urdu cases (`"lang": "roman_urdu"` in `ai/eval/eval_set.json`, ids `ru01`–`ru08`). The report prints pass rates per language. Keyword-only offline baseline: Roman Urdu retrieval 5/5 with the dictionary, 3/5 without it. **Run `python -m ai.eval.run_eval` with your Gemini key to confirm the embedding side.**
 
 ## 4. Cost estimate (standard paid tier, Nov 2026 list prices – verify on Google's pricing page)
 
@@ -70,7 +111,8 @@ Frontend: `VITE_API_URL` (optional, defaults to the deployed backend).
 10–20K chat turns a month comes to roughly **$13–26 a month**, inside the $20–30 budget. Cost controls: `AI_MAX_OUTPUT_TOKENS=700`, 20 messages/min per user or IP, a 10-minute response cache for identical first questions, query-embedding cache, and the static part of the system prompt placed first so implicit prompt caching can apply. Also set a billing budget alert in Google Cloud.
 
 ## 5. Verification checklist
-- `GET /api/ai/health` → `llm_configured: true`, `kv_backend` shows `memory` or `upstash-redis`.
+- `GET /api/ai/health` → `llm_configured: true`, and `redis: connected` once Upstash is set up (see §3a).
+- Roman Urdu: "mujhe 50 hazar se kam wala phone dikhao" → Roman Urdu reply, every card ≤ Rs. 50,000. Then "second wala cart mein daal do" (logged in) → cart count updates. "mera order kahan hai" → order tracker.
 - Chat: "something to charge my phone on the go" → power banks (semantic). "Logitech M185" → that exact mouse (keyword).
 - "Phones under 50k" → every card ≤ Rs. 50,000. Then "any cheaper?" keeps the phone context.
 - "Compare the two cheapest Samsung phones" → comparison table.
@@ -84,4 +126,5 @@ Frontend: `VITE_API_URL` (optional, defaults to the deployed backend).
 1. Set `SECRET_KEY` (and the other env vars) in the backend Vercel project **before** deploying. In production the API refuses to issue tokens without it.
 2. Run `python -m scripts.migrate` and `python -m scripts.embed_products` against the production DB from your machine.
 3. Deploy backend, then frontend. `frontend/vercel.json` adds the SPA rewrite, so deep links like `/products/12` no longer 404 on refresh.
-4. Every existing user has to log in once more (bearer tokens replaced the trust-the-client `user_id`). Their plaintext passwords are upgraded to hashes automatically when they do.
+4. In the backend project, add `UPSTASH_REDIS_URL` / `UPSTASH_REDIS_TOKEN`, redeploy, and check `/api/ai/health` shows `redis: connected`.
+5. Every existing user has to log in once more (bearer tokens replaced the trust-the-client `user_id`). Their plaintext passwords are upgraded to hashes automatically when they do.

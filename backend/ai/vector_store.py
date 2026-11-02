@@ -44,7 +44,28 @@ _STOP = set(
     "a an and are best buy can cheap do find for from get give good have i in is it looking me my need of "
     "on or please recommend show some something suggest the to under over above below want with you rs pkr "
     "price budget any".split()
+    # Roman Urdu filler words (query side: "mujhe sasta laptop chahiye" -> laptop + cheap)
+    + "mujhe mujh mera meri mere chahiye chahye chaiye hai hain koi kya kia ka ki ke ko se mein main me "
+      "dikhao dikhaao batao bataen wala wali wale do de dena dedo karo kar kardo daal dal daalo acha achi "
+      "accha acchi bohat bahut aur ya yeh ye woh wo liye lye jo hum aap ap tum bhai yaar jee ji plz pls".split()
 )
+
+# Roman Urdu -> English catalog vocabulary (keyword half of the hybrid score only;
+# the embedding half already understands Roman Urdu).
+ROMAN_URDU_TERMS = {
+    "sasta": "budget affordable", "sasti": "budget affordable", "saste": "budget affordable",
+    "mehnga": "premium high-end", "mehngi": "premium high-end", "mehenga": "premium high-end",
+    "joota": "shoes", "joote": "shoes", "jootay": "shoes", "jutay": "shoes", "chappal": "slippers sandals",
+    "kapre": "clothing", "kapde": "clothing", "kapray": "clothing", "kurta": "kurta shirt", "jora": "suit",
+    "kitaab": "books", "kitab": "books", "kitaaben": "books", "copy": "notebook",
+    "khilona": "toys", "khilone": "toys", "khilonay": "toys", "bachon": "kids", "bachay": "kids", "bacho": "kids", "bachchon": "kids",
+    "aurat": "women", "aurton": "women", "khawateen": "women", "larkiyon": "women", "larki": "women",
+    "mard": "men", "mardon": "men", "larkon": "men", "larka": "men",
+    "ghari": "watch", "gharri": "watch", "khana": "food", "masala": "spices", "chai": "tea",
+    "billi": "cat", "kutta": "dog", "kutte": "dog", "gari": "car", "gaari": "car", "baag": "garden", "paudhe": "plants",
+    "baal": "hair", "chehra": "face", "khushboo": "fragrance perfume", "bartan": "cookware utensils",
+    "awaz": "sound audio", "battery": "battery", "camera": "camera", "halka": "lightweight", "tez": "fast",
+}
 
 # Category name in the DB (from the Excel import) -> extra words people use.
 CATEGORY_SYNONYMS = {
@@ -72,6 +93,17 @@ _query_cache = _MemoryKV(max_items=2000)
 
 def tokenize(text):
     return [t for t in re.findall(r"[a-z0-9]+(?:\.[0-9]+)?", (text or "").lower()) if t not in _STOP]
+
+
+def query_tokens(query):
+    """Query tokens with Roman Urdu terms expanded to English catalog words."""
+    out = []
+    for t in re.findall(r"[a-z0-9]+(?:\.[0-9]+)?", (query or "").lower()):
+        if t in ROMAN_URDU_TERMS:
+            out.extend(ROMAN_URDU_TERMS[t].split())
+        elif t not in _STOP:
+            out.append(t)
+    return out
 
 
 def category_synonyms(category):
@@ -234,7 +266,7 @@ class ProductIndex:
 
     # ------------------------------------------------------------- scoring
     def keyword_scores(self, query):
-        q = tokenize(query)
+        q = query_tokens(query)
         scores = np.zeros(len(self.products), dtype=np.float32)
         if not q:
             return scores

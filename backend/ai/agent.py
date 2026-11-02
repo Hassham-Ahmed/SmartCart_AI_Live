@@ -145,7 +145,7 @@ def run_turn(message, session_id, user=None, user_name=None, log=True):
         catalog = []
     ctxmod.update_from_message(ctx, message, catalog)
     intent = ctx["current_intent"]
-    yield {"type": "meta", "intent": intent, "step": ctx["current_step"], "tone": ctx["tone"]}
+    yield {"type": "meta", "intent": intent, "step": ctx["current_step"], "tone": ctx["tone"], "language": ctx.get("language", "english")}
 
     # ---- 1. Retrieve
     retrieved = []

@@ -321,3 +321,112 @@ def test_context_persists_across_turns(index, no_persistence, monkeypatch):
     ctx = no_persistence["sess_test_0005"]
     assert [t["role"] for t in ctx["last_5_turns"]] == ["user", "model", "user", "model"]
     assert "gaming laptop" in ctx["history"]["searches"]
+
+
+# ----------------------------------------------------------------- KV / Redis
+def _fresh_kv(monkeypatch, **env):
+    import importlib
+    from ai import kv as kvmod
+    for n in ("UPSTASH_REDIS_URL", "UPSTASH_REDIS_REST_URL", "KV_REST_API_URL",
+              "UPSTASH_REDIS_TOKEN", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_TOKEN"):
+        monkeypatch.delenv(n, raising=False)
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    return importlib.reload(kvmod)
+
+
+def test_kv_status_fallback_when_unconfigured(monkeypatch):
+    m = _fresh_kv(monkeypatch)
+    assert m.kv.status() == {"redis": "fallback"} and m.kv.backend == "memory"
+    m.kv.set("a", "1", 10)
+    assert m.kv.get("a") == "1"
+
+
+def test_kv_accepts_user_env_names_and_reports_connected(monkeypatch):
+    m = _fresh_kv(monkeypatch, UPSTASH_REDIS_URL="https://x.upstash.io", UPSTASH_REDIS_TOKEN="t")
+    assert m.kv.backend == "upstash-redis"
+    store = {}
+
+    def fake_cmd(*args):
+        if args[0] == "PING":
+            return "PONG"
+        if args[0] == "SET":
+            store[args[1]] = args[2]
+            return "OK"
+        if args[0] == "GET":
+            return store.get(args[1])
+        return None
+
+    monkeypatch.setattr(m.kv.remote, "_cmd", fake_cmd)
+    assert m.kv.status()["redis"] == "connected"
+    m.kv.set_json("ctx:1", {"a": 1}, 60)
+    assert store["ctx:1"] == '{"a": 1}' and m.kv.get_json("ctx:1") == {"a": 1}
+
+
+def test_kv_redis_down_falls_back_to_memory(monkeypatch):
+    m = _fresh_kv(monkeypatch, UPSTASH_REDIS_REST_URL="https://x.upstash.io", UPSTASH_REDIS_REST_TOKEN="t")
+
+    def boom(*args):
+        raise OSError("connection refused")
+
+    monkeypatch.setattr(m.kv.remote, "_cmd", boom)
+    assert m.kv.status()["redis"] == "error"
+    m.kv.set("k", "v", 30)          # must not raise
+    assert m.kv.get("k") == "v"     # served by the in-memory TTL store
+
+
+def test_kv_rejects_tcp_connection_string(monkeypatch):
+    m = _fresh_kv(monkeypatch, UPSTASH_REDIS_URL="rediss://default:pw@x.upstash.io:6379", UPSTASH_REDIS_TOKEN="t")
+    st = m.kv.status()
+    assert st["redis"] == "misconfigured" and "https" in st["detail"] and m.kv.backend == "memory"
+
+
+# ---------------------------------------------------------------- Roman Urdu
+@pytest.mark.parametrize("text,expected", [
+    ("50 hazar se kam wala phone", {"max": 50000}),
+    ("1 lakh tak ka laptop", {"max": 100000}),
+    ("60k ke andar koi acha phone", {"max": 60000}),
+    ("2 lakh se zyada", {"min": 200000}),
+    ("30 se 50 hazar ke beech", {"min": 30000, "max": 50000}),
+    ("budget 80k hai", {"max": 80000}),
+])
+def test_roman_urdu_budget(text, expected):
+    assert ctxmod.extract_budget(text) == expected
+
+
+@pytest.mark.parametrize("text,intent", [
+    ("mera order kahan hai", "track"),
+    ("second wala cart mein daal do", "buy"),
+    ("compare karo dono ko", "compare"),
+    ("dono mein kya farq hai", "compare"),
+    ("mujhe paise wapas chahiye", "support"),
+    ("mujhe sasta laptop chahiye", "browse"),
+])
+def test_roman_urdu_intent(text, intent):
+    assert ctxmod.detect_intent(text) == intent
+
+
+@pytest.mark.parametrize("text,lang", [
+    ("mujhe sasta laptop chahiye", "roman_urdu"),
+    ("mera order kahan hai", "roman_urdu"),
+    ("second wala cart mein daal do", "roman_urdu"),
+    ("Show me a gaming laptop under 2 lakh", "english"),
+    ("best wireless earbuds", "english"),
+    ("Can you compare these two phones?", "english"),
+])
+def test_detect_language(text, lang):
+    assert ctxmod.detect_language(text) == lang
+
+
+def test_roman_urdu_query_expansion():
+    assert vs.query_tokens("mujhe sasta laptop chahiye") == ["budget", "affordable", "laptop"]
+    assert "shoes" in vs.query_tokens("running ke liye joote")
+
+
+def test_roman_urdu_language_reaches_prompt(index, no_persistence, monkeypatch):
+    client = use_fake_llm(monkeypatch, [[chunk(part_text("Ji bilkul!"))]])
+    events = list(agent.run_turn("mujhe sasta laptop chahiye", "sess_test_ru01"))
+    assert events[0]["language"] == "roman_urdu"
+    assert "LANGUAGE: roman_urdu" in client.calls[0]["system"]
+    # retrieval still found laptops for the Roman Urdu query
+    assert "Laptop" in client.calls[0]["system"].split("RETRIEVED PRODUCTS")[1]

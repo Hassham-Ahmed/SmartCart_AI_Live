@@ -6,6 +6,9 @@ Evaluate the SmartCart AI against ai/eval/eval_set.json.
     python -m ai.eval.run_eval --agent             # full agent incl. LLM (~42 chat turns, ~ $0.02)
     python -m ai.eval.run_eval --agent --user-id 5 # run agent cases as a logged-in user (use a TEST account)
 
+Cases carry "lang" (english | roman_urdu); the summary reports pass rates per language.
+Agent cases may have "setup": earlier turns replayed into the same session first.
+
 Metrics
   retrieval : category precision@5, constraint satisfaction (price/brand),
               keyword hit@5 (expected item type appears in top 5)
@@ -29,7 +32,7 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(os.path.join(BASE, ".env"))
 
-from ai.context import extract_budget  # noqa: E402
+from ai.context import detect_language, extract_budget  # noqa: E402
 from ai.vector_store import category_synonyms, retrieve_relevant_products  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -92,7 +95,10 @@ def run_agent(cases, user_id=None):
         if exp.get("login") and not user:
             print(f"[SKIP] {c['id']} needs --user-id")
             continue
-        events = list(run_turn(c["query"], f"eval_{uuid.uuid4().hex[:12]}", user=user, log=False))
+        sid = f"eval_{uuid.uuid4().hex[:12]}"
+        for prior in c.get("setup", []):  # earlier turns of the same conversation
+            list(run_turn(prior, sid, user=user, log=False))
+        events = list(run_turn(c["query"], sid, user=user, log=False))
         text = "".join(e["text"] for e in events if e["type"] == "token")
         low = re.sub(r"\{\{p:\d+\}\}", "", text).lower()
         done = next(e for e in events if e["type"] == "done")
@@ -112,6 +118,8 @@ def run_agent(cases, user_id=None):
             checks["no_cards"] = not cards
         if exp.get("text_any"):
             checks["text"] = any(t in low for t in exp["text_any"])
+        if exp.get("reply_language"):
+            checks["reply_language"] = detect_language(low) == exp["reply_language"]
         if exp.get("no_false_success"):
             checks["no_false_success"] = not re.search(r"\b(added|has been added)\b", low) or "not" in low
         r = {"id": c["id"], "query": c["query"], "pass": all(checks.values()), "checks": checks,
@@ -145,6 +153,12 @@ def main():
     if report["retrieval"]:
         ps = [r["checks"].get("category_p@5", 0) for r in report["retrieval"]]
         summary["retrieval"]["mean_category_p@5"] = round(sum(ps) / len(ps), 3)
+    langs = {c["id"]: c.get("lang", "english") for c in cases}
+    for name, rows in list(report.items()):
+        for lang in ("english", "roman_urdu"):
+            sub = [r for r in rows if langs.get(r["id"]) == lang]
+            if sub and name in summary:
+                summary[name][f"pass_rate_{lang}"] = round(sum(r["pass"] for r in sub) / len(sub), 3)
     report["summary"] = summary
     os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
     out = os.path.join(HERE, "results", time.strftime("%Y%m%d-%H%M%S") + ".json")
