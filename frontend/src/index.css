@@ -84,3 +84,335 @@ body {
 @utility badge {
   @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
 }
+
+/* =====================================================================
+   Accessibility basics
+   ===================================================================== */
+:focus-visible {
+  outline: 3px solid var(--color-primary-400);
+  outline-offset: 2px;
+}
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--color-primary-700);
+  font-weight: 600;
+  transition: top 0.15s;
+}
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+/* =====================================================================
+   Subtle 3D system (CSS-first; GPU-friendly: transform + opacity only)
+   JS (src/hooks/usePointer3D.js) only writes CSS custom properties.
+   ===================================================================== */
+
+/* --- Product cards: cursor-follow tilt + lift + shine sweep ---------- */
+.tilt-3d {
+  --rx: 0deg;
+  --ry: 0deg;
+  --lift: 0px;
+  position: relative;
+  transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(var(--lift));
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease;
+  will-change: transform;
+}
+.tilt-3d.is-tilting {
+  transition: transform 0.08s linear, box-shadow 0.35s ease;
+}
+.tilt-3d .depth-1 {
+  transform: translateZ(18px);
+}
+.tilt-3d .depth-2 {
+  transform: translateZ(34px);
+}
+.shine {
+  overflow: hidden;
+}
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+  transform: translateX(-120%);
+  opacity: 0;
+  border-radius: inherit;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tilt-3d:hover {
+    --lift: -6px;
+    box-shadow: 0 22px 40px -18px rgba(10, 25, 47, 0.35), 0 8px 16px -10px rgba(13, 110, 253, 0.25);
+  }
+  .shine:hover::after {
+    opacity: 1;
+    transform: translateX(120%);
+    transition: transform 0.9s ease, opacity 0.2s ease;
+  }
+}
+/* touch: a short "press" so taps feel physical */
+@media (hover: none) {
+  .tilt-3d:active {
+    transform: perspective(1000px) scale(0.985);
+    transition-duration: 0.1s;
+  }
+}
+
+/* --- Feature cards: 3D flip ------------------------------------------ */
+.flip-card {
+  perspective: 1000px;
+  min-height: 13rem;
+}
+.flip-card-inner {
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+.flip-card.is-flipped .flip-card-inner,
+.flip-card:focus-within .flip-card-inner {
+  transform: rotateY(180deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+/* --- CTA buttons: press-down 3D + glow -------------------------------- */
+.btn-3d {
+  position: relative;
+  box-shadow: 0 4px 0 0 rgba(10, 25, 47, 0.28), 0 8px 18px -8px rgba(13, 110, 253, 0.55);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.15s;
+}
+@media (hover: hover) {
+  .btn-3d:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 0 rgba(10, 25, 47, 0.28), 0 12px 26px -8px rgba(13, 110, 253, 0.7);
+  }
+}
+.btn-3d:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 rgba(10, 25, 47, 0.28), 0 4px 10px -6px rgba(13, 110, 253, 0.5);
+}
+
+/* --- Navbar depth on scroll ------------------------------------------ */
+.nav-depth {
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+.nav-depth.is-scrolled {
+  background-color: rgba(10, 25, 47, 0.82);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  backdrop-filter: saturate(160%) blur(12px);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* --- Hero: pointer parallax layers + floating product stack ----------- */
+.hero-3d {
+  --px: 0;
+  --py: 0;
+  perspective: 1200px;
+}
+.parallax-layer {
+  transform: translate3d(calc(var(--px) * var(--depth, 10px)), calc(var(--py) * var(--depth, 10px)), 0);
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+.hero-stack {
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--py) * -6deg)) rotateY(calc(var(--px) * 8deg));
+  transition: transform 0.3s ease-out;
+}
+.hero-tile {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.55);
+}
+.float-y {
+  animation: float-y 6s ease-in-out infinite;
+}
+.float-y-delayed {
+  animation: float-y 7s ease-in-out 1.2s infinite;
+}
+@keyframes float-y {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+.hero-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* --- Testimonials: 3D card swap --------------------------------------- */
+.review-stage {
+  perspective: 1200px;
+}
+.review-card-3d {
+  animation: review-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: center left;
+}
+@keyframes review-in {
+  from { opacity: 0; transform: rotateY(-14deg) translateZ(-40px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- Footer: layered depth -------------------------------------------- */
+.footer-depth {
+  position: relative;
+  isolation: isolate;
+  box-shadow: inset 0 18px 30px -24px rgba(0, 0, 0, 0.8);
+}
+.footer-depth::before,
+.footer-depth::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(70px);
+}
+.footer-depth::before {
+  width: 22rem;
+  height: 22rem;
+  left: -6rem;
+  top: -8rem;
+  background: rgba(13, 110, 253, 0.22);
+}
+.footer-depth::after {
+  width: 18rem;
+  height: 18rem;
+  right: -4rem;
+  bottom: -6rem;
+  background: rgba(255, 193, 7, 0.08);
+}
+
+/* --- Chat widget: 3D bubble + pulse + 3D expand ----------------------- */
+.chat-fab {
+  background: radial-gradient(circle at 30% 28%, #7eaeff 0%, #0d6efd 45%, #0a3a85 100%);
+  box-shadow: 0 14px 28px -10px rgba(13, 110, 253, 0.75), inset 0 -6px 12px rgba(0, 0, 0, 0.25),
+    inset 0 6px 10px rgba(255, 255, 255, 0.35);
+  transition: transform 0.2s ease;
+}
+@media (hover: hover) {
+  .chat-fab:hover {
+    transform: translateY(-3px) scale(1.04);
+  }
+}
+.chat-fab:active {
+  transform: scale(0.94);
+}
+.chat-fab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid rgba(13, 110, 253, 0.55);
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  80%, 100% { transform: scale(1.55); opacity: 0; }
+}
+.chat-panel-3d {
+  transform-origin: bottom right;
+  animation: panel-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1.05);
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: perspective(900px) rotateX(-14deg) translateY(24px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- Chat UI bits ------------------------------------------------------ */
+.typing-dots span {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 2px;
+  border-radius: 9999px;
+  background: var(--color-primary-400);
+  animation: typing 1.2s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+.snap-row {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.snap-row > * {
+  scroll-snap-align: start;
+}
+.chat-md p + p,
+.chat-md p + ul,
+.chat-md ul + p,
+.chat-md p + ol,
+.chat-md ol + p {
+  margin-top: 0.5rem;
+}
+.chat-md ul { list-style: disc; padding-left: 1.2rem; }
+.chat-md ol { list-style: decimal; padding-left: 1.2rem; }
+.chat-md li + li { margin-top: 0.15rem; }
+.chat-md code { background: rgba(10, 25, 47, 0.08); padding: 0.05rem 0.3rem; border-radius: 0.3rem; font-size: 0.85em; }
+.chat-md pre { background: #0a192f; color: #e6f0ff; padding: 0.75rem; border-radius: 0.6rem; overflow-x: auto; margin-top: 0.5rem; }
+.chat-md pre code { background: transparent; padding: 0; }
+.chat-md a { color: var(--color-primary-600); text-decoration: underline; }
+.chat-md h3, .chat-md h4 { font-weight: 700; margin-top: 0.5rem; }
+
+/* =====================================================================
+   Small screens: keep depth cues, drop motion-heavy effects
+   ===================================================================== */
+@media (max-width: 640px) {
+  .float-y, .float-y-delayed { animation: none; }
+  .hero-stack { transform: none; }
+}
+
+/* =====================================================================
+   Reduced motion: honour the OS setting everywhere
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .tilt-3d, .tilt-3d:hover, .hero-stack, .parallax-layer { transform: none !important; }
+  .chat-fab::before, .shine::after { display: none; }
+  /* flip cards: show both faces stacked instead of rotating */
+  .flip-card-inner, .flip-card:hover .flip-card-inner, .flip-card.is-flipped .flip-card-inner { transform: none !important; }
+  .flip-face { position: relative; inset: auto; }
+  .flip-back { transform: none; padding-top: 0; }
+}

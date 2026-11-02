@@ -2,16 +2,54 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SmartCart AI - AI-Powered Smart Shopping</title>
+    <meta name="description" content="Shop smarter with SmartCart AI: an AI shopping assistant that understands what you mean, recommends products from our catalog, compares them and tracks your orders." />
+    <meta name="theme-color" content="#0a192f" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SmartCart AI - Next-Gen Shopping</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Open Graph / social sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://smart-cart-ai-frontend-live-w24x.vercel.app/" />
+    <meta property="og:image" content="https://smart-cart-ai-frontend-live-w24x.vercel.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="SmartCart AI - Describe it. We'll find it." />
+    <meta property="og:site_name" content="SmartCart AI" />
+    <meta property="og:title" content="SmartCart AI - AI-Powered Smart Shopping" />
+    <meta property="og:description" content="Describe what you need and our AI assistant finds, compares and adds the right products to your cart." />
+    <meta property="og:locale" content="en_PK" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://smart-cart-ai-frontend-live-w24x.vercel.app/og-image.jpg" />
+    <meta name="twitter:title" content="SmartCart AI - AI-Powered Smart Shopping" />
+    <meta name="twitter:description" content="Semantic AI product search, comparisons and order tracking." />
+
+    <!-- Structured data: organisation + site search -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          { "@type": "Organization", "name": "SmartCart AI", "url": "https://smart-cart-ai-frontend-live-w24x.vercel.app/", "logo": "https://smart-cart-ai-frontend-live-w24x.vercel.app/favicon.svg", "email": "support@smartcartai.com", "address": { "@type": "PostalAddress", "addressLocality": "Karachi", "addressCountry": "PK" } },
+          { "@type": "WebSite", "name": "SmartCart AI", "url": "https://smart-cart-ai-frontend-live-w24x.vercel.app/", "potentialAction": { "@type": "SearchAction", "target": "https://smart-cart-ai-frontend-live-w24x.vercel.app/products?search={search_term_string}", "query-input": "required name=search_term_string" } }
+        ]
+      }
+    </script>
+
+    <!-- Backend API: open the connection early -->
+    <link rel="preconnect" href="https://smart-cart-ai-live.vercel.app" crossorigin />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Only the weights actually used (was 6 weights); display=swap avoids invisible text -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Font Awesome is only used by admin pages: load it without blocking first paint -->
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" /></noscript>
   </head>
   <body>
+    <noscript>SmartCart AI needs JavaScript enabled to run.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
