@@ -386,83 +386,9 @@ def get_wishlist(user_id):
             db.close()
 
 def place_order(user_id, shipping_address, payment_method, product_id=None, quantity=1):
-    db = None
-    cursor = None
-
-    try:
-        db = get_db()
-        cursor = db.cursor(dictionary=True)
-
-        # Direct Buy Logic inside MCP Tool
-        if product_id:
-            cursor.execute("SELECT id, name, price, stock FROM products WHERE id=%s", (product_id,))
-            product = cursor.fetchone()
-            if not product or product["stock"] < quantity:
-                return {"success": False, "message": "Product unavailable or out of stock."}
-
-            total = float(product["price"]) * int(quantity)
-            
-            cursor.execute("""
-                INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (user_id, total, "Pending", payment_method, shipping_address))
-            
-            order_id = cursor.lastrowid
-            cursor.execute("UPDATE products SET stock = stock - %s WHERE id=%s", (quantity, product_id))
-            db.commit()
-
-            return {
-                "success": True,
-                "message": "Order placed successfully!",
-                "order_id": order_id,
-                "total_amount": total,
-                "payment_method": payment_method,
-                "shipping_address": shipping_address
-            }
-
-        # Regular Cart Logic...
-        cursor.execute("""
-            SELECT shopping_cart.id AS cart_id, shopping_cart.product_id, shopping_cart.quantity,
-                   products.name, products.price, products.stock
-            FROM shopping_cart
-            JOIN products ON shopping_cart.product_id = products.id
-            WHERE shopping_cart.user_id=%s
-        """, (user_id,))
-
-        cart_items = cursor.fetchall()
-        if not cart_items:
-            return {"success": False, "message": "Your shopping cart is empty."}
-
-        total = sum(float(item["price"]) * item["quantity"] for item in cart_items)
-
-        cursor.execute("""
-            INSERT INTO orders (user_id, total_amount, status, payment_method, shipping_address)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (user_id, total, "Pending", payment_method, shipping_address))
-
-        order_id = cursor.lastrowid
-        for item in cart_items:
-            cursor.execute("UPDATE products SET stock = stock - %s WHERE id=%s", (item["quantity"], item["product_id"]))
-
-        cursor.execute("DELETE FROM shopping_cart WHERE user_id=%s", (user_id,))
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Order placed successfully!",
-            "order_id": order_id,
-            "total_amount": total,
-            "status": "Pending",
-            "payment_method": payment_method,
-            "shipping_address": shipping_address
-        }
-
-    except Exception as e:
-        if db: db.rollback()
-        return {"success": False, "message": f"Unable to place order: {str(e)}"}
-    finally:
-        if cursor: cursor.close()
-        if db: db.close()
+    """Delegates to the shared order service (stock checks, order_items, delivery fee)."""
+    from services.orders import place_order as _place_order, sanitize_payment
+    return _place_order(user_id, shipping_address, sanitize_payment(payment_method), product_id=product_id, quantity=quantity)
 
 def get_orders(user_id):
     db = None

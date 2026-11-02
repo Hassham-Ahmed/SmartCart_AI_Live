@@ -1,0 +1,6 @@
+# Local-only tooling (migration, embeddings, eval, data import). Not deployed.
+-r requirements.txt
+openpyxl
+pandas
+Pillow
+pytest
