@@ -430,3 +430,38 @@ def test_roman_urdu_language_reaches_prompt(index, no_persistence, monkeypatch):
     assert "LANGUAGE: roman_urdu" in client.calls[0]["system"]
     # retrieval still found laptops for the Roman Urdu query
     assert "Laptop" in client.calls[0]["system"].split("RETRIEVED PRODUCTS")[1]
+
+
+# ------------------------------------------------------------ startup checks
+from startup_checks import ConfigError, resolve_secret_key  # noqa: E402
+
+GOOD_KEY = "k" * 16 + "Z9x_" * 5  # 36 chars
+
+
+def test_secret_key_missing_in_production_fails():
+    with pytest.raises(ConfigError, match="SECRET_KEY is not set"):
+        resolve_secret_key({"VERCEL": "1"})
+
+
+@pytest.mark.parametrize("bad", ["smartcart_secret_key_12345", "dev-only-insecure-secret-change-me", "short-key"])
+def test_secret_key_insecure_or_short_fails(bad):
+    with pytest.raises(ConfigError):
+        resolve_secret_key({"FLASK_ENV": "production", "SECRET_KEY": bad})
+
+
+def test_secret_key_ok_in_production_and_dev_fallback():
+    assert resolve_secret_key({"VERCEL": "1", "SECRET_KEY": GOOD_KEY}) == GOOD_KEY
+    assert resolve_secret_key({}) == "dev-only-insecure-secret-change-me"  # local dev still works
+
+
+def test_app_import_crashes_without_secret_key_on_vercel(monkeypatch):
+    """The real app.py must refuse to start (before any route is served)."""
+    import importlib
+    import sys as _sys
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    import dotenv
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: False)  # ignore any local .env
+    _sys.modules.pop("app", None)
+    with pytest.raises(ConfigError):
+        importlib.import_module("app")

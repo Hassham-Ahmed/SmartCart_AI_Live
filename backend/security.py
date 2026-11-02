@@ -21,19 +21,16 @@ from flask import g, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from startup_checks import resolve_secret_key
+
 TOKEN_MAX_AGE = int(os.getenv("AUTH_TOKEN_MAX_AGE", 60 * 60 * 24 * 7))  # 7 days
 _HASH_PREFIXES = ("scrypt:", "pbkdf2:")
 
 
 def _secret_key():
-    key = os.getenv("SECRET_KEY")
-    if not key:
-        # Fail loudly in production rather than silently signing tokens with
-        # a value that is published in the git history.
-        if os.getenv("VERCEL") or os.getenv("FLASK_ENV") == "production":
-            raise RuntimeError("SECRET_KEY environment variable must be set in production.")
-        key = "dev-only-insecure-secret-change-me"
-    return key
+    # Validation (required in production, length, known-insecure values) lives in startup_checks,
+    # which app.py also runs at import time so a misconfigured deploy fails immediately.
+    return resolve_secret_key()
 
 
 def _serializer():

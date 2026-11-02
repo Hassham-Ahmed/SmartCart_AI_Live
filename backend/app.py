@@ -4,6 +4,12 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))  # before route imports read env
 
+from startup_checks import run_startup_checks  # noqa: E402
+
+# Fail fast: a missing/weak SECRET_KEY in production crashes the function on import with a clear
+# message in the Vercel logs (every request 500s) instead of a "healthy" site where nobody can log in.
+run_startup_checks()
+
 from flask import Flask, jsonify, send_from_directory  # noqa: E402
 from flask_cors import CORS  # noqa: E402
 

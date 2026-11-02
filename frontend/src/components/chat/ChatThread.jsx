@@ -4,6 +4,7 @@ import { productsApi } from "../../api/client";
 import { useCart } from "../../context/CartContext";
 import { suggestionsFor } from "../../hooks/useChat";
 import Markdown from "./Markdown";
+import QuickCheckout from "./QuickCheckout";
 import {
   CartSummary, ComparisonTable, OrderTracker, ProductCarousel, QuickReplies, TypingDots, VoiceButton,
 } from "./ChatWidgets";
@@ -11,8 +12,9 @@ import {
 const toast = (icon, title) =>
   Swal.fire({ toast: true, position: "top-end", icon, title, showConfirmButton: false, timer: 1600 });
 
-export default function ChatThread({ chat, compact = false, onBuyNow, heightClass = "h-[60vh]" }) {
-  const { user, messages, sending, toolStatus, send, retry } = chat;
+export default function ChatThread({ chat, compact = false, heightClass = "h-[60vh]" }) {
+  const { user, messages, sending, toolStatus, send, retry, appendMessage } = chat;
+  const [buyTarget, setBuyTarget] = useState(null); // { product, qty } for the Quick Checkout modal
   const { refreshCartCount } = useCart();
   const [input, setInput] = useState("");
   const scrollRef = useRef(null);
@@ -35,6 +37,21 @@ export default function ChatThread({ chat, compact = false, onBuyNow, heightClas
     if (!user?.id) return toast("warning", "Please log in first.");
     const { ok, data } = await productsApi.addToWishlist({ product_id: product.id });
     toast(ok ? "success" : "error", data.message || (ok ? "Saved to wishlist!" : "Could not update."));
+  };
+
+  // Buy Now: direct single-product order via the Quick Checkout modal (same flow as before the upgrade)
+  const handleBuyNow = (product, qty) => {
+    if (!user?.id) return toast("warning", "Please log in first.");
+    setBuyTarget({ product, qty });
+  };
+
+  const handleOrderPlaced = ({ product, qty, paymentMethod, orderId, total }) => {
+    setBuyTarget(null);
+    refreshCartCount();
+    appendMessage({
+      role: "ai",
+      reply: `🎉 **Order placed!**\n\n- **Product:** ${product.name} × ${qty}\n- **Order ID:** #${orderId}\n- **Total:** Rs. ${Number(total).toLocaleString()}\n- **Payment:** ${paymentMethod}\n\nAsk me *"track my order"* any time.`,
+    });
   };
 
   const submit = (text) => {
@@ -76,7 +93,7 @@ export default function ChatThread({ chat, compact = false, onBuyNow, heightClas
                       compact={compact}
                       onAddToCart={handleAddToCart}
                       onAddToWishlist={handleAddToWishlist}
-                      onBuyNow={onBuyNow}
+                      onBuyNow={handleBuyNow}
                     />
                   )}
                   {msg.cart && (
@@ -126,6 +143,9 @@ export default function ChatThread({ chat, compact = false, onBuyNow, heightClas
           </button>
         </form>
       </div>
+      {buyTarget && (
+        <QuickCheckout product={buyTarget.product} qty={buyTarget.qty} onClose={() => setBuyTarget(null)} onPlaced={handleOrderPlaced} />
+      )}
     </div>
   );
 }

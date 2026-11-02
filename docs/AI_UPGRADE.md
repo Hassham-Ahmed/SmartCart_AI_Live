@@ -123,7 +123,7 @@ You can also watch keys appear in the Upstash **Data Browser** after a chat mess
 - Lighthouse (mobile) on `/` and `/products`.
 
 ## 6. Deployment
-1. Set `SECRET_KEY` (and the other env vars) in the backend Vercel project **before** deploying. In production the API refuses to issue tokens without it.
+1. Set `SECRET_KEY` (at least 32 random characters: `python -c "import secrets; print(secrets.token_urlsafe(48))"`) and the other env vars in the backend Vercel project **before** deploying. `startup_checks.py` runs when `app.py` loads. If the key is missing, shorter than 32 characters or a known-insecure value, the function crashes on its first request with `ConfigError: SECRET_KEY is not set…` in the Vercel logs, and every endpoint returns 500. Vercel still marks the deployment "Ready" (the Python build never imports the app), so open `/api/test` right after deploying to confirm it's up.
 2. Run `python -m scripts.migrate` and `python -m scripts.embed_products` against the production DB from your machine.
 3. Deploy backend, then frontend. `frontend/vercel.json` adds the SPA rewrite, so deep links like `/products/12` no longer 404 on refresh.
 4. In the backend project, add `UPSTASH_REDIS_URL` / `UPSTASH_REDIS_TOKEN`, redeploy, and check `/api/ai/health` shows `redis: connected`.

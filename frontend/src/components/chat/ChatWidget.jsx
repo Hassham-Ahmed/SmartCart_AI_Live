@@ -14,7 +14,8 @@ function WidgetPanel({ onClose }) {
 
   useEffect(() => {
     panelRef.current?.querySelector("input")?.focus();
-    const onKey = (e) => e.key === "Escape" && onClose();
+    // Escape closes the panel, unless a modal (e.g. Quick Checkout) is open on top of it
+    const onKey = (e) => e.key === "Escape" && !document.querySelector('[aria-modal="true"]') && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
