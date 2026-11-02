@@ -1,8 +1,12 @@
 """
 Tiny key-value layer.
 
-* If UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set we use Upstash
-  Redis over HTTPS. Upstash is the boring choice on Vercel: no TCP
+* If an Upstash REST URL + token are set we use Upstash Redis over HTTPS.
+  Accepted names (first one found wins):
+      URL   : UPSTASH_REDIS_URL | UPSTASH_REDIS_REST_URL | KV_REST_API_URL
+      TOKEN : UPSTASH_REDIS_TOKEN | UPSTASH_REDIS_REST_TOKEN | KV_REST_API_TOKEN
+  The URL must be the HTTPS "REST URL" (https://<name>.upstash.io), not the
+  redis:// / rediss:// TCP connection string. Upstash is the boring choice on Vercel: no TCP
   connection pooling issues in serverless, its free tier covers a student
   project (~4-5 commands per chat turn), no extra Python dependency (stdlib urllib).
 * Otherwise we fall back to a per-process TTL dict. That still works on
@@ -15,8 +19,18 @@ import threading
 import time
 import urllib.request
 
-_URL = os.getenv("UPSTASH_REDIS_REST_URL", "").rstrip("/")
-_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
+def _first_env(*names):
+    for n in names:
+        v = os.getenv(n, "").strip()
+        if v:
+            return v
+    return ""
+
+
+_URL = _first_env("UPSTASH_REDIS_URL", "UPSTASH_REDIS_REST_URL", "KV_REST_API_URL").rstrip("/")
+_TOKEN = _first_env("UPSTASH_REDIS_TOKEN", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_TOKEN")
+# A redis:// connection string can't be used over REST - treat as misconfigured, not as Redis.
+_URL_OK = _URL.startswith("https://")
 
 
 class _MemoryKV:
@@ -91,12 +105,33 @@ class _SafeKV:
     """Never let a cache outage break a chat request."""
 
     def __init__(self):
-        self.remote = _UpstashKV() if (_URL and _TOKEN) else None
+        self.remote = _UpstashKV() if (_URL_OK and _TOKEN) else None
         self.local = _MemoryKV()
 
     @property
     def backend(self):
         return "upstash-redis" if self.remote else "memory"
+
+    def status(self):
+        """
+        For /api/ai/health:
+          connected     - Upstash configured and answered PING
+          fallback      - not configured; using the in-memory TTL store
+          misconfigured - env vars present but unusable (e.g. redis:// URL, missing token)
+          error         - configured but PING failed; requests use the memory fallback
+        """
+        if not self.remote:
+            if _URL or _TOKEN:
+                why = "URL must be the https:// REST URL" if (_URL and not _URL_OK) else "URL and token must both be set"
+                return {"redis": "misconfigured", "detail": why}
+            return {"redis": "fallback"}
+        try:
+            t0 = time.time()
+            pong = self.remote._cmd("PING")
+            return {"redis": "connected" if pong == "PONG" else "error",
+                    "latency_ms": int((time.time() - t0) * 1000)}
+        except Exception as e:  # noqa: BLE001
+            return {"redis": "error", "detail": type(e).__name__}
 
     def _try(self, op, *args):
         if self.remote:

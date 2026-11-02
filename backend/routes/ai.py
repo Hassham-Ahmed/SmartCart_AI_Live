@@ -152,4 +152,5 @@ def health():
         "embed_model": llm.EMBED_MODEL,
         "embed_dims": llm.EMBED_DIMS,
         "kv_backend": kv.backend,
+        **kv.status(),  # "redis": connected | fallback | misconfigured | error
     })
